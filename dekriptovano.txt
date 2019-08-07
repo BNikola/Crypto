@@ -1,0 +1,20 @@
+todo
+- kreirati nove sertifikate
+    - CA
+    - user1, user2 - validni
+    - user3 - na crl listi
+    - user4 - na crl listi
+    - user5 - istekao
+
+- sertifikati za enk i potpis
+
+- kreirati foldere
+    - sertifikati: potpis i enkripcija
+    - potpisani dokumenti
+    - enkriptovani dokumenti
+    - private and public keys
+    - dekriptovani dokumenti
+    - dokumenti za kriptovanje
+    
+- putanja do kljuca i sertifikata korisnika
+- kreirati login.txt (username#hash#path
