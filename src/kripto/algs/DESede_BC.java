@@ -1,4 +1,4 @@
-/*
+package kripto.algs;/*
  * Copyright (C) 2011 www.itcsolutions.eu
  *
  * This file is free software; you can redistribute it and/or modify
@@ -20,18 +20,21 @@
  * @version june 2011
  *
  */
-import java.io.*;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.ShortBufferException;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.InvalidCipherTextException;
-
+import org.bouncycastle.crypto.KeyGenerationParameters;
 import org.bouncycastle.crypto.engines.DESedeEngine;
+import org.bouncycastle.crypto.generators.DESedeKeyGenerator;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 
-public class DESede_BC {
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.ShortBufferException;
+import java.io.*;
+import java.security.SecureRandom;
+
+public class DESede_BC extends CryptoAlg {
 
     PaddedBufferedBlockCipher encryptCipher;
     PaddedBufferedBlockCipher decryptCipher;
@@ -43,13 +46,13 @@ public class DESede_BC {
     byte[] key = null;              //the key
 
     public DESede_BC(){
-        //use a default 192 bit key
-        key = "SECRET_1SECRET_2SECRET_3".getBytes();
-        InitCiphers();
-    }
-    public DESede_BC(byte[] keyBytes){
-        key = new byte[keyBytes.length];
-        System.arraycopy(keyBytes, 0 , key, 0, keyBytes.length);
+        SecureRandom secureRandom = new SecureRandom();
+        DESedeKeyGenerator keyGenerator = new DESedeKeyGenerator();
+        //use a 192 bit key - if i:0 then key length is 192
+        keyGenerator.init(new KeyGenerationParameters(secureRandom,0));
+        key = keyGenerator.generateKey();
+        // length of Base64 encoded key is 24
+        System.out.println(key.length);
         InitCiphers();
     }
 
@@ -79,7 +82,7 @@ public class DESede_BC {
             // Bytes written to out will be encrypted
             // Read in the cleartext bytes from in InputStream and
             //      write them encrypted to out OutputStream
-
+            out.write(key);
             int noBytesRead = 0;        //number of bytes read from input
             int noBytesProcessed = 0;   //number of bytes processed
 
@@ -90,6 +93,7 @@ public class DESede_BC {
             }
             noBytesProcessed =
                     encryptCipher.doFinal(obuf, 0);
+
 
             out.write(obuf, 0, noBytesProcessed);
 
@@ -108,6 +112,11 @@ public class DESede_BC {
             // Bytes read from in will be decrypted
             // Read in the decrypted bytes from in InputStream and and
             //      write them in cleartext to out OutputStream
+
+            // read key first
+            byte [] readKey = new byte[24];
+            in.read(readKey, 0, 24);
+            key = readKey;
 
             int noBytesRead = 0;        //number of bytes read from input
             int noBytesProcessed = 0;   //number of bytes processed
@@ -128,6 +137,8 @@ public class DESede_BC {
 
     public static void main(String[] args) {
         DESede_BC a = new DESede_BC();
+        DESede_BC b = new DESede_BC();
+        DESede_BC c = new DESede_BC();
         try {
             a.encrypt(new FileInputStream("Biljeske.txt"), 2, new FileOutputStream("sifra.txt"));
             a.decrypt(new FileInputStream("sifra.txt"), 2, new FileOutputStream("dekriptovano.txt"));
