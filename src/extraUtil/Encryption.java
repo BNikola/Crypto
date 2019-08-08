@@ -6,20 +6,33 @@ import kripto.algs.MyCamellia;
 import kripto.algs.MyDES;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemReader;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.PrivateKey;
-import java.security.Security;
+import java.security.*;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
 public class Encryption {
+
+    // todo
+    //  - create class for RSA and certs
+    //  - create methods for reading private key, reading x509
+    //  - add user class
+    //  - add path to user to file users (path to certs and keys)
+    //  - add hash of the document
+    //  - add init() to functions
+    //  - replace file input/output streams with file paths
+    //  - add certificate validation when it is being used
+    //  - add validation of file and directory paths
+    //  - create certificates and folder ctructure
 
     private static void init() {
         Security.addProvider(new BouncyCastleProvider());
@@ -55,14 +68,47 @@ public class Encryption {
 
         if (alg.equals("AES")) {
             try {
-                byte[] key = new byte[MyAES.getKeyLength()];
-                fileInputStream.read(key);
-                MyAES algorithm = new MyAES(key);
-                fileInputStream.read(key);
+//                byte[] key = new byte[MyAES.getKeyLength()];
+//                fileInputStream.read(key);
+//                MyAES algorithm = new MyAES(key);
+//                fileInputStream.read(key);
+                byte[] read = new byte[256];
+
+                // load private key
+                PemReader reader = new PemReader(new InputStreamReader(new FileInputStream("private2048.key")));
+                PemObject pemObject = reader.readPemObject();
+
+                // private key
+                KeyFactory kf = KeyFactory.getInstance("RSA", "BC");
+                PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(pemObject.getContent());
+                PrivateKey pk = kf.generatePrivate(privateKeySpec);
+                reader.close();
+
+                // reading alg name
+                fileInputStream.read(read);
+                String algName = new String(Test.decrypt(read, pk));
+                System.out.println(algName);
+                // reading alg key
+                fileInputStream.read(read);
+                MyAES algorithm = new MyAES(Test.decrypt(read, pk));
+                fileInputStream.read(read);
+                fileInputStream.read(read);
+                String hash = new String(Test.decrypt(read, pk));
+                System.out.println(hash);
+                fileInputStream.read(read);
+
                 algorithm.decrypt(fileInputStream, fileOutputStream);
             } catch (InvalidCipherTextException e) {
                 e.printStackTrace();
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (NoSuchProviderException e) {
+                e.printStackTrace();
+            } catch (InvalidKeySpecException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         } else if (alg.equals("CAMELLIA")) {
@@ -96,9 +142,28 @@ public class Encryption {
         if (alg.equals("AES")) {
             try {
                 MyAES algorithm = new MyAES();
-                out.write(algorithm.getKey());
-                out.write("\n##############################\n".getBytes(StandardCharsets.UTF_8));
-                algorithm.encrypt(in, out);
+//                pisanje u fajl bez enkripcije sa rsa
+//                out.write(algorithm.getKey());
+//                out.write("\n##############################\n".getBytes(StandardCharsets.UTF_8));
+
+//                pisanje u fajl sa rsa enkripcijom
+                X509Certificate cert = Test.loadCert("user1.crt");
+                out.write(Test.encrypt("AES".getBytes(StandardCharsets.UTF_8), cert.getPublicKey()));
+                out.write(Test.encrypt(algorithm.getKey(), cert.getPublicKey()));
+                out.write(Test.encrypt("\n##############################\n".getBytes(StandardCharsets.UTF_8), cert.getPublicKey()));
+
+                // kreiranje hash-a
+                ByteArrayInputStream bais = new ByteArrayInputStream(in.readAllBytes());
+                byte[] data = bais.readAllBytes();
+                bais.reset();
+                String d = new String(data);
+                byte[] hash = Hashing.generateHashSHA256(d).getBytes(StandardCharsets.UTF_8);
+                System.out.println(new String(hash));
+                out.write(Test.encrypt(hash, cert.getPublicKey()));
+                out.write(Test.encrypt("\n##############################\n".getBytes(StandardCharsets.UTF_8), cert.getPublicKey()));
+
+
+                algorithm.encrypt(bais, out);
                 out.flush();
                 out.close();
             } catch (IOException e) {
@@ -110,6 +175,8 @@ public class Encryption {
             } catch (ShortBufferException e) {
                 e.printStackTrace();
             } catch (InvalidCipherTextException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         } else if (alg.equals("CAMELLIA")) {
@@ -154,9 +221,13 @@ public class Encryption {
         FileInputStream in;
         FileOutputStream out;
         try {
+
+
 //            in = new FileInputStream("testEnkripcije.txt");
 //            out = new FileOutputStream("sifra.txt");
 //            Encryption.enkripcija(in, out, "AES");
+
+
 //            Encryption.dekripcija(new FileInputStream("umirem.txt"), new FileOutputStream("dekriptovano.txt"), "CAMELLIA");
             Encryption.dekripcija(new FileInputStream("sifra.txt"), new FileOutputStream("dekriptovano.txt"), "AES");
 //            Encryption.dekripcija(new FileInputStream("umirem.txt"), new FileOutputStream("dekriptovano.txt"), "DES3");
