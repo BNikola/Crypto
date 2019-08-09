@@ -225,12 +225,12 @@ public class Encryption {
 
 //            in = new FileInputStream("testEnkripcije.txt");
 //            out = new FileOutputStream("sifra.txt");
-//            Encryption.enkripcija(in, out, "AES");
+//            Encryption.enkripcija(in, out, "DES3");
 
 
 //            Encryption.dekripcija(new FileInputStream("umirem.txt"), new FileOutputStream("dekriptovano.txt"), "CAMELLIA");
-            Encryption.dekripcija(new FileInputStream("sifra.txt"), new FileOutputStream("dekriptovano.txt"), "AES");
-//            Encryption.dekripcija(new FileInputStream("umirem.txt"), new FileOutputStream("dekriptovano.txt"), "DES3");
+//            Encryption.dekripcija(new FileInputStream("sifra.txt"), new FileOutputStream("dekriptovano.txt"), "AES");
+            Encryption.dekripcija(new FileInputStream("sifra.txt"), new FileOutputStream("dekriptovano.txt"), "DES3");
 //
         } catch (FileNotFoundException e) {
             e.printStackTrace();

@@ -15,6 +15,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Arrays;
 import java.util.Date;
 
 public class Test {
@@ -62,7 +63,8 @@ public class Test {
 //        }
         Security.addProvider(new BouncyCastleProvider());
         try {
-            PemReader reader = new PemReader(new InputStreamReader(new FileInputStream("private2048.key")));
+//            PemReader reader = new PemReader(new InputStreamReader(new FileInputStream("private2048.key")));
+            PemReader reader = new PemReader(new InputStreamReader(new FileInputStream("CRL/private/korisnik1-enc.pem")));
             PemObject pemObject = reader.readPemObject();
 
             System.out.println(pemObject.getContent());
@@ -74,18 +76,19 @@ public class Test {
             System.out.println(pk.getFormat());
             reader.close();
 
-            X509Certificate cert = Test.loadCert("user1.crt");
+            X509Certificate cert = Test.loadCert("CRL/certs/korisnik1.crt");
             // duzina je 256 fiksno
             byte [] test = Test.encrypt("AES".getBytes(StandardCharsets.UTF_8), cert.getPublicKey());
             System.out.println(test.length);
             System.out.println(new String(Test.decrypt(test, pk)));
             System.out.println(cert.getNotAfter());
-            System.out.println(cert.getKeyUsage());
-            try {
-                cert.checkValidity(new Date());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            System.out.println(Arrays.toString(cert.getKeyUsage()));
+            // check validity of user cert
+//            try {
+//                cert.checkValidity(new Date());
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -100,5 +103,57 @@ public class Test {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+//        try {
+//            // load user cert
+////            X509Certificate userCert = Test.loadCert("CRL/certs/korisnik5.crt");
+//            X509Certificate userCert = Test.loadCert("user1.crt");
+//            // load root cert
+//            X509Certificate rootCert = Test.loadCert("CRL/rootca.crt");
+//
+//            // verify user cert with root cert
+//            userCert.verify(rootCert.getPublicKey());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 }
+
+
+
+//KeyUsage ::= BIT STRING {
+//        digitalSignature        (0),
+//        nonRepudiation          (1),
+//        keyEncipherment         (2),
+//        dataEncipherment        (3),
+//        keyAgreement            (4),
+//        keyCertSign             (5),
+//        cRLSign                 (6),
+//        encipherOnly            (7),
+//        decipherOnly            (8) }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -3,7 +3,7 @@ package kripto.algs;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.KeyGenerationParameters;
-import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.engines.DESedeEngine;
 import org.bouncycastle.crypto.generators.DESedeKeyGenerator;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -63,9 +63,9 @@ public class MyDES {
     // endregion
 
     private void InitCiphers() {
-        encryptCipher = new PaddedBufferedBlockCipher(new AESEngine());
+        encryptCipher = new PaddedBufferedBlockCipher(new DESedeEngine());
         encryptCipher.init(true, new KeyParameter(key));
-        decryptCipher = new PaddedBufferedBlockCipher(new AESEngine());
+        decryptCipher = new PaddedBufferedBlockCipher(new DESedeEngine());
         decryptCipher.init(false, new KeyParameter(key));
     }
 
