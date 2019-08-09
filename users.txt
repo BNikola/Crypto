@@ -1,5 +1,5 @@
-Korisnik1#r1aJGIalXMZ28Bv6WjvoOljG04OnwCoWBH0Jq1mC2kw=
-Korisnik2#q9ioZRr0ISfRW2T2i/7+HV0Nj1eVctd5OMOnGNzsZ9I=
-Korisnik3#mPmLWXp81n9exjbtxTwBfgRdkujSVCbjRw+GpKfdG6s=
-Korisnik4#ggsHnoLuVJ7CH3BGWzA4V17isWkvU5vDeyxHjUiPoSw=
-Korisnik5#AeeJQ5W4STc1RgKkb6zRgqs9APN1RklzC+JJvzmy8Dk=
+Korisnik1#r1aJGIalXMZ28Bv6WjvoOljG04OnwCoWBH0Jq1mC2kw=#/home/korisnik/Faks/Projektni/CRL/certs/korisnik1.crt#CRL/private/korisnik1.key
+Korisnik2#q9ioZRr0ISfRW2T2i/7+HV0Nj1eVctd5OMOnGNzsZ9I=#/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt#CRL/private/korisnik2.key
+Korisnik3#mPmLWXp81n9exjbtxTwBfgRdkujSVCbjRw+GpKfdG6s=#/home/korisnik/Faks/Projektni/CRL/certs/korisnik3.crt#CRL/private/korisnik3.key
+Korisnik4#ggsHnoLuVJ7CH3BGWzA4V17isWkvU5vDeyxHjUiPoSw=#/home/korisnik/Faks/Projektni/CRL/certs/korisnik4.crt#CRL/private/korisnik4.key
+Korisnik5#AeeJQ5W4STc1RgKkb6zRgqs9APN1RklzC+JJvzmy8Dk=#/home/korisnik/Faks/Projektni/CRL/certs/korisnik5.crt#CRL/private/korisnik5.key

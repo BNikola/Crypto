@@ -82,6 +82,12 @@ public class UniversalAlgorithm {
     // endregion
 
     // region Getters
+
+
+    public String getAlgorithmName() {
+        return algorithmName;
+    }
+
     public static int getKeyLength() {
         return KEY_LENGTH;
     }

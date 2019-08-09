@@ -64,7 +64,7 @@ public class Test {
         Security.addProvider(new BouncyCastleProvider());
         try {
 //            PemReader reader = new PemReader(new InputStreamReader(new FileInputStream("private2048.key")));
-            PemReader reader = new PemReader(new InputStreamReader(new FileInputStream("CRL/private/korisnik1-enc.pem")));
+            PemReader reader = new PemReader(new InputStreamReader(new FileInputStream("CRL/private/korisnik5.key")));
             PemObject pemObject = reader.readPemObject();
 
             System.out.println(pemObject.getContent());
@@ -76,7 +76,7 @@ public class Test {
             System.out.println(pk.getFormat());
             reader.close();
 
-            X509Certificate cert = Test.loadCert("CRL/certs/korisnik1.crt");
+            X509Certificate cert = Test.loadCert("CRL/certs/korisnik5.crt");
             // duzina je 256 fiksno
             byte [] test = Test.encrypt("AES".getBytes(StandardCharsets.UTF_8), cert.getPublicKey());
             System.out.println(test.length);

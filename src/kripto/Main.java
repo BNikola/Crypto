@@ -13,6 +13,9 @@ import java.security.Security;
 public class Main extends Application {
 
     private Stage window;
+
+
+
     @Override
     public void start(Stage primaryStage) {
         try {

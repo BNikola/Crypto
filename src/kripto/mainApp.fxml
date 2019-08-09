@@ -9,11 +9,11 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane minHeight="600.0" minWidth="1000.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="kripto.MainAppController">
+<BorderPane fx:id="mainBorderPane" minHeight="600.0" minWidth="1000.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="kripto.MainAppController">
    <center>
       <TabPane tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
         <tabs>
-          <Tab text="Enkripcija">
+          <Tab fx:id="encryptTab" text="Enryption">
                <content>
                   <BorderPane>
                      <center>
@@ -26,12 +26,12 @@
                                           <Insets top="5.0" />
                                        </HBox.margin>
                                     </Label>
-                                    <TextField prefHeight="25.0" prefWidth="204.0">
+                                    <TextField fx:id="filePathTextFieldEnc" prefHeight="25.0" prefWidth="204.0">
                                        <HBox.margin>
                                           <Insets left="39.0" />
                                        </HBox.margin>
                                     </TextField>
-                                    <Button mnemonicParsing="false" text="Browse" />
+                                    <Button fx:id="fileButtonEnc" mnemonicParsing="false" onAction="#findFile" text="Browse" />
                                  </children>
                                  <padding>
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -44,11 +44,11 @@
                                           <Insets top="5.0" />
                                        </HBox.margin>
                                     </Label>
-                                    <ChoiceBox prefWidth="150.0">
+                                    <ComboBox fx:id="algorithmComboBox" prefWidth="150.0">
                                        <HBox.margin>
                                           <Insets left="45.0" />
                                        </HBox.margin>
-                                    </ChoiceBox>
+                                    </ComboBox>
                                  </children>
                                  <padding>
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -61,12 +61,12 @@
                                           <Insets top="5.0" />
                                        </HBox.margin>
                                     </Label>
-                                    <TextField prefHeight="25.0" prefWidth="204.0">
+                                    <TextField fx:id="outputPathTextFieldEnc" prefHeight="25.0" prefWidth="204.0">
                                        <HBox.margin>
                                           <Insets left="15.0" />
                                        </HBox.margin>
                                     </TextField>
-                                    <Button mnemonicParsing="false" text="Browse" />
+                                    <Button fx:id="outputDirButtonEnc" mnemonicParsing="false" onAction="#findDirToOutput" text="Browse" />
                                  </children>
                                  <padding>
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -79,8 +79,8 @@
                                           <Insets top="5.0" />
                                        </HBox.margin>
                                     </Label>
-                                    <TextField prefHeight="25.0" prefWidth="204.0" />
-                                    <Button mnemonicParsing="false" text="Browse" />
+                                    <TextField fx:id="userCertTextFieldEnc" prefHeight="25.0" prefWidth="204.0" />
+                                    <Button fx:id="certificateButtonEnc" mnemonicParsing="false" onAction="#findCert" text="Browse" />
                                  </children>
                                  <padding>
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -93,7 +93,7 @@
                                           <Insets top="5.0" />
                                        </HBox.margin>
                                     </Label>
-                                    <Button mnemonicParsing="false" text="Encrypt">
+                                    <Button fx:id="encryptButton" mnemonicParsing="false" text="Encrypt">
                                        <HBox.margin>
                                           <Insets left="9.0" />
                                        </HBox.margin>
@@ -132,7 +132,7 @@
                   </BorderPane>
                </content>
             </Tab>
-          <Tab text="Dekripcija">
+          <Tab fx:id="decryptTab" text="Decryption">
                <content>
                   <BorderPane>
                      <center>
@@ -145,12 +145,12 @@
                                           <Insets top="5.0" />
                                        </HBox.margin>
                                     </Label>
-                                    <TextField prefHeight="25.0" prefWidth="204.0">
+                                    <TextField fx:id="filePathTextFieldDec" prefHeight="25.0" prefWidth="204.0">
                                        <HBox.margin>
                                           <Insets left="39.0" />
                                        </HBox.margin>
                                     </TextField>
-                                    <Button mnemonicParsing="false" text="Browse" />
+                                    <Button fx:id="fileButtonDec" mnemonicParsing="false" onAction="#findFile" text="Browse" />
                                  </children>
                                  <padding>
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -163,12 +163,12 @@
                                           <Insets top="5.0" />
                                        </HBox.margin>
                                     </Label>
-                                    <TextField prefHeight="25.0" prefWidth="204.0">
+                                    <TextField fx:id="outputPathTextFieldDec" prefHeight="25.0" prefWidth="204.0">
                                        <HBox.margin>
                                           <Insets left="15.0" />
                                        </HBox.margin>
                                     </TextField>
-                                    <Button mnemonicParsing="false" text="Browse" />
+                                    <Button fx:id="dirButton" mnemonicParsing="false" onAction="#findDirToOutput" text="Browse" />
                                  </children>
                                  <padding>
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -181,7 +181,7 @@
                                           <Insets top="5.0" />
                                        </HBox.margin>
                                     </Label>
-                                    <Button mnemonicParsing="false" text="Decrypt">
+                                    <Button fx:id="decryptButton" mnemonicParsing="false" text="Decrypt">
                                        <HBox.margin>
                                           <Insets left="9.0" />
                                        </HBox.margin>
@@ -223,13 +223,13 @@
    <top>
       <HBox BorderPane.alignment="CENTER">
          <children>
-            <Label text="Welcome User: ">
+            <Label fx:id="userLabel" text="Welcome">
                <HBox.margin>
                   <Insets top="5.0" />
                </HBox.margin>
             </Label>
             <Region HBox.hgrow="ALWAYS" />
-            <Label text="Log out">
+            <Label fx:id="logOutLabel" onMouseClicked="#logOut" onMouseEntered="#changeCursor" onMouseExited="#revertCursor" text="Log out">
                <HBox.margin>
                   <Insets top="5.0" />
                </HBox.margin>

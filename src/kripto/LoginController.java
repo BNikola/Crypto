@@ -1,10 +1,13 @@
 package kripto;
 
-import exceptions.*;
+import exceptions.CertPathException;
+import exceptions.PasswordException;
+import exceptions.UserNotFoundException;
+import exceptions.WrongCredentials;
 import extraUtil.AlertBox;
 import extraUtil.ConfirmBox;
 import extraUtil.Hashing;
-import extraUtil.MD5;
+import extraUtil.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -16,12 +19,18 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Base64;
 
 
 public class LoginController {
+    // todo
+    //  - verify certificate of login user
+
+    private static final String PATH_TO_CERTS = "CRL/certs";
 
     @FXML
     private TextField usernameTextField;
@@ -31,18 +40,21 @@ public class LoginController {
     private BorderPane loginBorderPane;
 
     @FXML
-    private TextField directoryTextField;
+    private TextField certificateTextField;
 
     @FXML
     public void findCert(ActionEvent actionEvent) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Find certificate");
+        fileChooser.setInitialDirectory(new File(PATH_TO_CERTS));
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("Certificate files", "*.crt")
         );
-        File file = fileChooser.showOpenDialog(null);
+
+        // this is for removing warning: GtkDialog mapped without a transient parent.
+        File file = fileChooser.showOpenDialog((Stage)loginBorderPane.getScene().getWindow());
         if (file != null) {
-            directoryTextField.setText(file.getAbsolutePath());
+            certificateTextField.setText(file.getAbsolutePath());
         }
     }
 
@@ -61,45 +73,17 @@ public class LoginController {
         }
     }
 
-    // todo - change this to use class Hashing -> rename to hashing
+    // validates user credentials, password, and path to certificate
     private void validationOfData() throws UserNotFoundException, PasswordException, CertPathException, WrongCredentials {
         if (usernameTextField.getText().length() == 0) {
             throw new UserNotFoundException();
         } else if (passwordTextField.getText().length() == 0) {
             throw new PasswordException();
-        } else if (directoryTextField.getText().length() == 0) {
+        } else if (certificateTextField.getText().length() == 0) {
             throw new CertPathException();
         } else {
-            try {
-//                BufferedReader br = new BufferedReader(new FileReader("users.txt"));
-                FileInputStream fis = new FileInputStream("users.txt");
-                byte[] data =  fis.readAllBytes();
-                String users = new String(data);
-                fis.close();
-                if (!users.contains(usernameTextField.getText() + "#")) {
-                    // if there is no username return exception
-                    throw new WrongCredentials();
-                } else {
-                    // find index of line where is username
-                    // users must have one new line at the end of file
-                    int startIndex = users.indexOf(usernameTextField.getText() + "#");
-                    int endIndex = users.indexOf('\n', startIndex);
-                    String line = users.substring(startIndex, endIndex);
-                    String [] s = line.split("#");
-
-                    if(!Hashing.validateHashSHA256(passwordTextField.getText(), s[1])) {
-                        throw new PasswordException();
-                    } else {
-                        System.out.println("Uspjesno ste se prijavili!");
-                    }
-                }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (GeneralSecurityException e) {
-                e.printStackTrace();
-            }
+            // create user for main app
+            MainAppController.user = new User(usernameTextField.getText(), certificateTextField.getText(), passwordTextField.getText());
         }
     }
 
@@ -113,7 +97,7 @@ public class LoginController {
         } else if (e instanceof PasswordException) {
             AlertBox.display("Wrong password", "You have entered the wrong password!");
         } else if (e instanceof CertPathException) {
-            AlertBox.display("Wrong path to cert", "You have entered the wrong path!");
+            AlertBox.display("Wrong path to cert", "You have entered the wrong path to certificate!");
         } else if (e instanceof WrongCredentials) {
             AlertBox.display("Wrong credencials", "Please input the correct credentials!");
         }
@@ -127,7 +111,8 @@ public class LoginController {
             stage.setScene(scene);
             stage.setTitle("Main application");
             ((Stage) loginBorderPane.getScene().getWindow()).close();
-            scene.getStylesheets().add("mainApp.css");
+            File f = new File("css/mainApp.css");
+            scene.getStylesheets().add("file:///" + f.getAbsolutePath().replace("\\", "/"));
             stage.show();
 
             scene.getWindow().setOnCloseRequest(e -> {
