@@ -47,7 +47,7 @@ public class UniversalAlgorithm {
                 KEY_LENGTH = 32;
                 try {
                     KeyGenerator keyGenerator = KeyGenerator.getInstance("AES", "BC");
-                    keyGenerator.init(KEY_LENGTH);
+                    keyGenerator.init(256);
                     key = keyGenerator.generateKey().getEncoded();
                 } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
                     e.printStackTrace();

@@ -19,6 +19,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import kripto.Encryption;
 import kripto.algs.CertUtil;
 
 import java.io.File;
@@ -45,9 +46,14 @@ public class MainAppController implements Initializable {
     private static final String PATH_TO_CRL = "/home/korisnik/Faks/Projektni/CRL/crl/rootcrl.pem";
     private static final String PATH_TO_CERTS = "CRL/certs";
     private static final String DEFAULT_DIR = System.getProperty("user.dir");
-    private static final String CERTIFICATE_EXTENSION = "*.crt";
-    private static final String OUTPUT_EXTENSION_ENC = "*.txt";
+    private static final String INPUT_EXTENSION_FILTER = "*.java";
+    private static final String CERTIFICATE_EXTENSION_FILTER = "*.crt";
+    private static final String OUTPUT_EXTENSION_ENC_FILTER = "*.txt";
+    private static final String OUTPUT_EXTENSION_ENC = ".txt";
+    private static final String OUTPUT_EXTENSION_DEC = ".java";
+
     private X509Certificate rootCert;
+    private List<String> reportList = new ArrayList<>();
 
 
     // region FXML members
@@ -98,6 +104,7 @@ public class MainAppController implements Initializable {
     // todo
     //  - implement methods for encrypt and decrypt
     //  - figure out what to output for result
+    //  - think about verify that returns boolean (Certificate verify)
 
 
 
@@ -121,14 +128,32 @@ public class MainAppController implements Initializable {
 
     // region Encryption and decryption
     public void encrypt(ActionEvent event) {
-        // todo
-        //  - populate this list with something meaningful
         try {
+            // validate fields and certificate
             validationOfDataEnc();
+            // todo - maybe remove cert check (you can encrypt but others will not trust you)
             CertUtil.checkValidityOfCertificate(user.getCertificate(), rootCert, PATH_TO_CRL);
+
+            // generate parameters for encryption
+            String inputPath = filePathTextFieldEnc.getText();
+            String fileName = outputFileNameTextFieldEnc.getText();
+            String outputDir = outputPathTextFieldEnc.getText();
+            String outputPath = outputDir + File.separator + fileName + OUTPUT_EXTENSION_ENC;
+            String algorithmName = algorithmComboBox.getSelectionModel().getSelectedItem();
+
+            // start encryption
+            Encryption.encryption(inputPath, outputPath, algorithmName);
+
+            // populate the list
+            reportList.add("Username: " + user.getUsername());
+            reportList.add("Symmetric algorithm used: " + algorithmName);
+            reportList.add("Output file: " + fileName + OUTPUT_EXTENSION_ENC);
+            reportList.add("Output location: " + outputDir);
+            reportList.add("Status of encryption: " + "OK");
         } catch (NotDirectoryException | FieldMissingException | FileNotFoundException e) {
             notifyIncorrectData(e);
         } catch (SignatureException | CertificateOnCRLException | InvalidKeyException | NoSuchAlgorithmException | CertificateException e) {
+            reportList.add("Status of encryption: " + "FAIL");
             AlertBox.display("Certificate error", "Your certificate is not valid");
         } catch (CRLException e) {
             e.printStackTrace();
@@ -137,34 +162,53 @@ public class MainAppController implements Initializable {
         } catch (NoSuchProviderException e) {
             e.printStackTrace();
         }
-        List<String> listA = new ArrayList<>();
-        listA.add(user.getUsername());
-        listA.add(user.getPathToCert());
-        listA.add(new Date().toString());
-        ObservableList<String> list = FXCollections.observableList(listA);
+
+
+        reportList.add("Date: " + new Date());
+        ObservableList<String> list = FXCollections.observableList(reportList);
         reportListViewEnc.setItems(list);
     }
 
     public void decrypt(ActionEvent event) {
         try {
             validationOfDataDec();
+            CertUtil.checkValidityOfCertificate(user.getCertificate(), rootCert, PATH_TO_CRL);
+
+            // generate parameters for decryption
+            String inputPath = filePathTextFieldDec.getText();
+            String outputDir = outputPathTextFieldDec.getText();
+            String outputFileName = "Test"; // todo - change this - make string parser to find class name
+            String outputPath = outputDir + File.separator + outputFileName;
+            Encryption.decryption(inputPath, outputPath);
         } catch (NotDirectoryException | FieldMissingException | FileNotFoundException e) {
             notifyIncorrectData(e);
+        } catch (SignatureException | CertificateOnCRLException | InvalidKeyException | NoSuchAlgorithmException | CertificateException e) {
+            reportList.add("Status of decryption: " + "FAIL");
+            AlertBox.display("Certificate error", "Your certificate is not valid");
+        } catch (CRLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
         }
+        reportList.add("Date: " + new Date());
+        ObservableList<String> list = FXCollections.observableList(reportList);
+        reportListViewDec.setItems(list);
     }
     // endregion
 
     // region Browse buttons
     public void findFileEnc(ActionEvent event) {
-        findFile("Find file to encrypt", DEFAULT_DIR, "Java files", "*.java", filePathTextFieldEnc);
+        findFile("Find file to encrypt", DEFAULT_DIR, "Java files", INPUT_EXTENSION_FILTER, filePathTextFieldEnc);
     }
 
     public void findFileDec(ActionEvent event) {
-        findFile("Find file to decrypt", DEFAULT_DIR, "Text files", OUTPUT_EXTENSION_ENC, filePathTextFieldDec);
+        findFile("Find file to decrypt", DEFAULT_DIR, "Text files", OUTPUT_EXTENSION_ENC_FILTER, filePathTextFieldDec);
     }
 
     public void findCert(ActionEvent actionEvent) {
-        findFile("Find certificate", PATH_TO_CERTS, "Certificate files", CERTIFICATE_EXTENSION, userCertTextFieldEnc);
+        findFile("Find certificate", PATH_TO_CERTS, "Certificate files", CERTIFICATE_EXTENSION_FILTER, userCertTextFieldEnc);
     }
 
     public void findDirToOutputEnc(ActionEvent event) {

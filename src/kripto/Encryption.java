@@ -1,6 +1,10 @@
 package kripto;
 
+import com.sun.tools.javac.Main;
+import controllers.MainAppController;
 import extraUtil.Test;
+import extraUtil.User;
+import kripto.algs.CertUtil;
 import kripto.algs.MyAES;
 import kripto.algs.MyCamellia;
 import kripto.algs.MyDES;
@@ -14,6 +18,8 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -33,31 +39,6 @@ public class Encryption {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    private PrivateKey loadKey(String path) throws Exception {
-        Security.addProvider(new BouncyCastleProvider());
-
-        // key from user certificate
-        PrivateKey key;
-        File f = new File(path);
-        DataInputStream dis = new DataInputStream(new FileInputStream(f)); // file input stream for reading bytes, f contains key
-        byte [] privateUserKey = new byte[(int)f.length()];     // byte array for reading the key
-        dis.read(privateUserKey); // reading data (bytes)
-        dis.close();
-
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA"); // rsa is used for private key
-        PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(privateUserKey); // PKCS8 contains pair of keys, PKCS12 contains cert and keys
-        key = keyFactory.generatePrivate(privateSpec);
-        return key;
-    }
-
-    public static X509Certificate loadCert(String path) throws Exception {
-        CertificateFactory cf;
-        X509Certificate cert;
-        cf = CertificateFactory.getInstance("X.509");
-        cert = (X509Certificate)cf.generateCertificate(new FileInputStream(path));  //read certificate in x.509 format from path
-        return cert;
-    }
-
 
     private static void dekripcija(FileInputStream fileInputStream, FileOutputStream fileOutputStream, String alg) {
 
@@ -70,7 +51,7 @@ public class Encryption {
                 byte[] read = new byte[256];
 
                 // load private key
-                PemReader reader = new PemReader(new InputStreamReader(new FileInputStream("private2048.key")));
+                PemReader reader = new PemReader(new InputStreamReader(new FileInputStream("/home/korisnik/Faks/Projektni/CRL/private/korisnik2.key")));
                 PemObject pemObject = reader.readPemObject();
 
                 // private key
@@ -161,15 +142,7 @@ public class Encryption {
                 algorithm.encrypt(bais, out);
                 out.flush();
                 out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (BadPaddingException e) {
-                e.printStackTrace();
-            } catch (IllegalBlockSizeException e) {
-                e.printStackTrace();
-            } catch (ShortBufferException e) {
-                e.printStackTrace();
-            } catch (InvalidCipherTextException e) {
+            } catch (IOException | BadPaddingException | IllegalBlockSizeException | ShortBufferException | InvalidCipherTextException e) {
                 e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -182,15 +155,7 @@ public class Encryption {
                 algorithm.encrypt(in, out);
                 out.flush();
                 out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (BadPaddingException e) {
-                e.printStackTrace();
-            } catch (IllegalBlockSizeException e) {
-                e.printStackTrace();
-            } catch (ShortBufferException e) {
-                e.printStackTrace();
-            } catch (InvalidCipherTextException e) {
+            } catch (IOException | BadPaddingException | IllegalBlockSizeException | ShortBufferException | InvalidCipherTextException e) {
                 e.printStackTrace();
             }
         } else if (alg.equals("DES3")) {
@@ -201,14 +166,100 @@ public class Encryption {
                 algorithm.encrypt(in, out);
                 out.flush();
                 out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InvalidCipherTextException e) {
+            } catch (IOException | InvalidCipherTextException e) {
                 e.printStackTrace();
             }
         }
+    }
 
+    // when encrypting, generate key and store it into file
+    public static void encryption(String pathToInput, String pathToOutput, String symmetricAlgorithm) {
+        UniversalAlgorithm algorithm = new UniversalAlgorithm(symmetricAlgorithm);
+        try (InputStream in = new FileInputStream(pathToInput); OutputStream out = new FileOutputStream(pathToOutput)) {
+            // writing data for decryption and encrypting with certificate
+            // separator
+            byte[] separator = CertUtil.encryptAsymmetric(
+                    "\n##############################\n".getBytes(StandardCharsets.UTF_8),
+                    MainAppController.user.getCertificate());
+            // userName
+            out.write(
+                    CertUtil.encryptAsymmetric(
+                            MainAppController.user.getUsername().getBytes(StandardCharsets.UTF_8),
+                            MainAppController.user.getCertificate()));
+            out.write(separator);
+            // symmetric algorithm name
+            out.write(
+                    CertUtil.encryptAsymmetric(
+                            algorithm.getAlgorithmName().getBytes(StandardCharsets.UTF_8),
+                            MainAppController.user.getCertificate()));
+            out.write(separator);
+            // symmetric algorithm key
+            out.write(
+                    CertUtil.encryptAsymmetric(
+                            algorithm.getKey(),
+                            MainAppController.user.getCertificate()));
+            out.write(separator);
+            // create hash of the file
+//            ByteArrayInputStream bais = new ByteArrayInputStream(in.readAllBytes());
+//            String data = new String(bais.readAllBytes());
+//            bais.reset();       // reset hash so the symmetric encryption can be done
+            String data = new String(Files.readAllBytes(Paths.get(pathToInput)));       // read without bais
+            byte[] hash = Hashing.generateHashSHA512(data).getBytes(StandardCharsets.UTF_8);
+            // hash of the file
+            out.write(
+                    CertUtil.encryptAsymmetric(
+                            hash,
+                            MainAppController.user.getCertificate()));
+            out.write(separator);
 
+//            algorithm.encrypt(bais, out);
+            algorithm.encrypt(in, out);
+            out.flush();
+//            bais.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // when decrypting, remember to skip separator
+    public static void decryption(String pathToInput, String pathToOutput) {
+        try (InputStream in = new FileInputStream(pathToInput); OutputStream out = new FileOutputStream(pathToOutput)) {
+            // reader for header
+            byte[] reader = new byte[256];  // 256 is the size of RSA encryption
+            // read username
+            in.read(reader);
+            String userName = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
+            // check validity of certificate CertUtil.checkValidityOfCertificate(new User());
+            // read separator
+            in.read(reader);
+            // read symmetric algorithm name
+            String algorithmName = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
+            // read separator
+            in.read(reader);
+            // read symmetric algorithm key
+            byte[] algorithmKey = CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey());
+            // read separator
+            in.read(reader);
+            // read hash of file
+            String hash = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
+            // read separator
+            in.read(reader);
+            // create algorithm and call decrypt
+            UniversalAlgorithm algorithm = new UniversalAlgorithm(algorithmName, algorithmKey);
+            algorithm.decrypt(in, out);
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
@@ -220,15 +271,54 @@ public class Encryption {
 
 //            in = new FileInputStream("testEnkripcije.txt");
 //            out = new FileOutputStream("sifra.txt");
-//            Encryption.enkripcija(in, out, "DES3");
+//            Encryption.enkripcija(in, out, "AES");
 
 
 //            Encryption.dekripcija(new FileInputStream("umirem.txt"), new FileOutputStream("dekriptovano.txt"), "CAMELLIA");
-//            Encryption.dekripcija(new FileInputStream("sifra.txt"), new FileOutputStream("dekriptovano.txt"), "AES");
-            Encryption.dekripcija(new FileInputStream("sifra.txt"), new FileOutputStream("dekriptovano.txt"), "DES3");
+            Encryption.dekripcija(new FileInputStream("/home/korisnik/Faks/Projektni/kriptovaneDatoteke/test1.txt"), new FileOutputStream("dekriptovano.txt"), "AES");
+//            Encryption.dekripcija(new FileInputStream("sifra.txt"), new FileOutputStream("dekriptovano.txt"), "DES3");
 //
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

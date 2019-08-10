@@ -1,9 +1,15 @@
 package kripto.algs;
 
 import extraUtil.exceptions.CertificateOnCRLException;
+import kripto.Hashing;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.*;
 import java.security.spec.InvalidKeySpecException;
@@ -27,6 +33,7 @@ public class CertUtil {
 
     }
 
+    // keys must be in DER format
     public static PrivateKey loadKey(String pathToPrivateKey) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         Security.addProvider(new BouncyCastleProvider());
 
@@ -56,4 +63,91 @@ public class CertUtil {
             throw new CertificateOnCRLException();
         }
     }
+
+    public static byte[] generateSignature(PrivateKey privateKey, byte[] input) throws GeneralSecurityException {
+        Security.addProvider(new BouncyCastleProvider());
+        Signature signature = Signature.getInstance("SHA256withRSA", "BC");
+        signature.initSign(privateKey);
+        signature.update(input);
+        return signature.sign();
+    }
+
+    public static boolean verifySignature(X509Certificate certificate, byte[] input, byte[] encSignature) throws GeneralSecurityException {
+        Security.addProvider(new BouncyCastleProvider());
+        Signature signature = Signature.getInstance("SHA256withRSA", "BC");
+        signature.initVerify(certificate);
+        signature.update(input);
+        return signature.verify(encSignature);
+    }
+
+    public static byte[] encryptAsymmetric(byte[] input, X509Certificate certificate) throws GeneralSecurityException {
+        byte[] cipherText = null;
+
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, certificate.getPublicKey());
+        cipherText = cipher.doFinal(input);
+
+        return cipherText;
+    }
+
+    public static byte[] decryptAsymmetric(byte[] input, PrivateKey privateKey) throws GeneralSecurityException {
+        byte[] decryptedText = null;
+
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        decryptedText = cipher.doFinal(input);
+
+        return decryptedText;
+    }
+
+    public static void main(String[] args) {
+        try {
+            String username = Hashing.generateHashSHA512("Korisnik1");
+            X509Certificate cert = loadCert("/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt");
+            byte[] nesto = encryptAsymmetric(username.getBytes(StandardCharsets.UTF_8), cert);
+            System.out.println(nesto.length);
+            PrivateKey pk = loadKey("/home/korisnik/Faks/Projektni/CRL/private/korisnik2.key");
+            byte[] dekript = decryptAsymmetric(nesto, pk);
+            System.out.println(new String(dekript));
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
