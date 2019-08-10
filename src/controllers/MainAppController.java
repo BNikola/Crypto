@@ -163,8 +163,8 @@ public class MainAppController implements Initializable {
             e.printStackTrace();
         }
 
-
         reportList.add("Date: " + new Date());
+        reportList.add("==================================================================");
         ObservableList<String> list = FXCollections.observableList(reportList);
         reportListViewEnc.setItems(list);
     }
@@ -193,6 +193,7 @@ public class MainAppController implements Initializable {
             e.printStackTrace();
         }
         reportList.add("Date: " + new Date());
+        reportList.add("==================================================================");
         ObservableList<String> list = FXCollections.observableList(reportList);
         reportListViewDec.setItems(list);
     }

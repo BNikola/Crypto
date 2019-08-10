@@ -4,6 +4,9 @@ import com.sun.tools.javac.Main;
 import controllers.MainAppController;
 import extraUtil.Test;
 import extraUtil.User;
+import extraUtil.exceptions.CertPathException;
+import extraUtil.exceptions.PasswordException;
+import extraUtil.exceptions.WrongCredentials;
 import kripto.algs.CertUtil;
 import kripto.algs.MyAES;
 import kripto.algs.MyCamellia;
@@ -51,25 +54,26 @@ public class Encryption {
                 byte[] read = new byte[256];
 
                 // load private key
-                PemReader reader = new PemReader(new InputStreamReader(new FileInputStream("/home/korisnik/Faks/Projektni/CRL/private/korisnik2.key")));
-                PemObject pemObject = reader.readPemObject();
-
-                // private key
-                KeyFactory kf = KeyFactory.getInstance("RSA", "BC");
-                PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(pemObject.getContent());
-                PrivateKey pk = kf.generatePrivate(privateKeySpec);
-                reader.close();
+//                PemReader reader = new PemReader(new InputStreamReader(new FileInputStream("/home/korisnik/Faks/Projektni/CRL/private/korisnik2.key")));
+//                PemObject pemObject = reader.readPemObject();
+//
+//                // private key
+//                KeyFactory kf = KeyFactory.getInstance("RSA", "BC");
+//                PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(pemObject.getContent());
+//                PrivateKey pk = kf.generatePrivate(privateKeySpec);
+//                reader.close();
+                PrivateKey pk = CertUtil.loadKey("/home/korisnik/Faks/Projektni/CRL/private/korisnik2.key");
 
                 // reading alg name
                 fileInputStream.read(read);
-                String algName = new String(Test.decrypt(read, pk));
+                String algName = new String(CertUtil.decryptAsymmetric(read, pk));
                 System.out.println(algName);
                 // reading alg key
                 fileInputStream.read(read);
-                MyAES algorithm = new MyAES(Test.decrypt(read, pk));
+                MyAES algorithm = new MyAES(CertUtil.decryptAsymmetric(read, pk));
                 fileInputStream.read(read);
                 fileInputStream.read(read);
-                String hash = new String(Test.decrypt(read, pk));
+                String hash = new String(CertUtil.decryptAsymmetric(read, pk));
                 System.out.println(hash);
                 fileInputStream.read(read);
 
@@ -123,10 +127,10 @@ public class Encryption {
 //                out.write("\n##############################\n".getBytes(StandardCharsets.UTF_8));
 
 //                pisanje u fajl sa rsa enkripcijom
-                X509Certificate cert = Test.loadCert("user1.crt");
-                out.write(Test.encrypt("AES".getBytes(StandardCharsets.UTF_8), cert.getPublicKey()));
-                out.write(Test.encrypt(algorithm.getKey(), cert.getPublicKey()));
-                out.write(Test.encrypt("\n##############################\n".getBytes(StandardCharsets.UTF_8), cert.getPublicKey()));
+                X509Certificate cert = CertUtil.loadCert("/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt");
+                out.write(CertUtil.encryptAsymmetric("AES".getBytes(StandardCharsets.UTF_8), cert));
+                out.write(CertUtil.encryptAsymmetric(algorithm.getKey(), cert));
+                out.write(CertUtil.encryptAsymmetric("\n##############################\n".getBytes(StandardCharsets.UTF_8), cert));
 
                 // kreiranje hash-a
                 ByteArrayInputStream bais = new ByteArrayInputStream(in.readAllBytes());
@@ -135,8 +139,9 @@ public class Encryption {
                 String d = new String(data);
                 byte[] hash = Hashing.generateHashSHA256(d).getBytes(StandardCharsets.UTF_8);
                 System.out.println(new String(hash));
-                out.write(Test.encrypt(hash, cert.getPublicKey()));
-                out.write(Test.encrypt("\n##############################\n".getBytes(StandardCharsets.UTF_8), cert.getPublicKey()));
+                out.write(CertUtil.encryptAsymmetric(hash, cert));
+                out.write(CertUtil.encryptAsymmetric("\n##############################\n".getBytes(StandardCharsets.UTF_8), cert));
+
 
 
                 algorithm.encrypt(bais, out);
@@ -200,11 +205,11 @@ public class Encryption {
                             MainAppController.user.getCertificate()));
             out.write(separator);
             // create hash of the file
-//            ByteArrayInputStream bais = new ByteArrayInputStream(in.readAllBytes());
-//            String data = new String(bais.readAllBytes());
-//            bais.reset();       // reset hash so the symmetric encryption can be done
-            String data = new String(Files.readAllBytes(Paths.get(pathToInput)));       // read without bais
-            byte[] hash = Hashing.generateHashSHA512(data).getBytes(StandardCharsets.UTF_8);
+            ByteArrayInputStream bais = new ByteArrayInputStream(in.readAllBytes());
+            String data = new String(bais.readAllBytes());
+            bais.reset();       // reset hash so the symmetric encryption can be done
+//            String data = new String(Files.readAllBytes(Paths.get(pathToInput)));       // read without bais
+            byte[] hash = Hashing.generateHashSHA256(data).getBytes(StandardCharsets.UTF_8);
             // hash of the file
             out.write(
                     CertUtil.encryptAsymmetric(
@@ -212,10 +217,10 @@ public class Encryption {
                             MainAppController.user.getCertificate()));
             out.write(separator);
 
-//            algorithm.encrypt(bais, out);
-            algorithm.encrypt(in, out);
+            algorithm.encrypt(bais, out);
+//            algorithm.encrypt(in, out);
             out.flush();
-//            bais.close();
+            bais.close();
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -230,27 +235,41 @@ public class Encryption {
     public static void decryption(String pathToInput, String pathToOutput) {
         try (InputStream in = new FileInputStream(pathToInput); OutputStream out = new FileOutputStream(pathToOutput)) {
             // reader for header
+            // todo - get certificate of the user
             byte[] reader = new byte[256];  // 256 is the size of RSA encryption
             // read username
             in.read(reader);
             String userName = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
+            System.out.println(userName);
             // check validity of certificate CertUtil.checkValidityOfCertificate(new User());
             // read separator
             in.read(reader);
+            System.out.println(new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey())));
             // read symmetric algorithm name
+            in.read(reader);
             String algorithmName = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
+            System.out.println(algorithmName);
             // read separator
             in.read(reader);
+            System.out.println(new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey())));
             // read symmetric algorithm key
+            in.read(reader);
             byte[] algorithmKey = CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey());
+            System.out.println(algorithmKey.length + "||||");
             // read separator
             in.read(reader);
+            System.out.println(new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey())).length() + "|||");
             // read hash of file
+            in.read(reader);
             String hash = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
+            System.out.println(hash);
             // read separator
             in.read(reader);
+            System.out.println(new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey())));
+            // read separator
             // create algorithm and call decrypt
             UniversalAlgorithm algorithm = new UniversalAlgorithm(algorithmName, algorithmKey);
+            System.out.println(algorithm.getKey().length);
             algorithm.decrypt(in, out);
 
         } catch (FileNotFoundException e) {
@@ -264,21 +283,33 @@ public class Encryption {
 
     public static void main(String[] args) {
         init();
-        FileInputStream in;
-        FileOutputStream out;
-        try {
-
-
-//            in = new FileInputStream("testEnkripcije.txt");
-//            out = new FileOutputStream("sifra.txt");
-//            Encryption.enkripcija(in, out, "AES");
-
-
-//            Encryption.dekripcija(new FileInputStream("umirem.txt"), new FileOutputStream("dekriptovano.txt"), "CAMELLIA");
-            Encryption.dekripcija(new FileInputStream("/home/korisnik/Faks/Projektni/kriptovaneDatoteke/test1.txt"), new FileOutputStream("dekriptovano.txt"), "AES");
-//            Encryption.dekripcija(new FileInputStream("sifra.txt"), new FileOutputStream("dekriptovano.txt"), "DES3");
+//        FileInputStream in;
+//        FileOutputStream out;
+//        try {
 //
-        } catch (FileNotFoundException e) {
+//
+////            in = new FileInputStream("testEnkripcije.txt");
+////            out = new FileOutputStream("sifra.txt");
+////            Encryption.enkripcija(in, out, "AES");
+//
+//
+//
+//            Encryption.dekripcija(new FileInputStream("sifra.txt"), new FileOutputStream("dekriptovano.txt"), "AES");
+////            Encryption.dekripcija(new FileInputStream("umirem.txt"), new FileOutputStream("dekriptovano.txt"), "CAMELLIA");
+////            Encryption.dekripcija(new FileInputStream("sifra.txt"), new FileOutputStream("dekriptovano.txt"), "DES3");
+////
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+        try {
+            MainAppController.user = new User("Korisnik2", "/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt", "sigurnost2");
+//            Encryption.encryption("/home/korisnik/Faks/Projektni/src/extraUtil/Test.java", "sifra.txt", "AES");
+            Encryption.decryption("/home/korisnik/Faks/Projektni/kriptovaneDatoteke/test2.txt", "dekriptovano.txt");
+        } catch (WrongCredentials wrongCredentials) {
+            wrongCredentials.printStackTrace();
+        } catch (PasswordException e) {
+            e.printStackTrace();
+        } catch (CertPathException e) {
             e.printStackTrace();
         }
     }

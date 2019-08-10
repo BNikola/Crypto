@@ -90,6 +90,7 @@ public class CertUtil {
         return cipherText;
     }
 
+    // todo - resolve bad padding something - decrypt not working
     public static byte[] decryptAsymmetric(byte[] input, PrivateKey privateKey) throws GeneralSecurityException {
         byte[] decryptedText = null;
 
