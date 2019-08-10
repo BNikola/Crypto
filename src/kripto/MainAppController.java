@@ -32,7 +32,6 @@ public class MainAppController implements Initializable {
     private static final String PATH_TO_CERTS = "CRL/certs";
 
 
-
     // region FXML members
     @FXML
     private BorderPane mainBorderPane;
@@ -60,6 +59,8 @@ public class MainAppController implements Initializable {
     private Button certificateButtonEnc;
     @FXML
     private Button encryptButton;
+    @FXML
+    private TextField outputFileNameTextFieldEnc;
     @FXML
     private TextField filePathTextFieldDec;
     @FXML
