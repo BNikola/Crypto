@@ -1,14 +1,10 @@
-package kripto;
-
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.File;
-import java.security.Security;
 
 public class Main extends Application {
 
@@ -19,12 +15,12 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("login.fxml"));
+            Parent root = FXMLLoader.load(getClass().getResource("views/login.fxml"));
             window = primaryStage;
             window.setTitle("JCrypto Login");
             Scene scene = new Scene(root);
             scene.getStylesheets().clear();
-            File f = new File("css/login.css");
+            File f = new File("src/views/css/login.css");
             scene.getStylesheets().add("file:///" + f.getAbsolutePath().replace("\\", "/"));
             window.setScene(scene);
             window.setResizable(false);

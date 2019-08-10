@@ -1,4 +1,4 @@
-package exceptions;
+package extraUtil.exceptions;
 
 public class CertPathException extends Exception {
     public CertPathException() {

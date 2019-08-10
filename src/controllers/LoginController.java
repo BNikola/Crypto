@@ -1,12 +1,11 @@
-package kripto;
+package controllers;
 
-import exceptions.CertPathException;
-import exceptions.PasswordException;
-import exceptions.UserNotFoundException;
-import exceptions.WrongCredentials;
+import extraUtil.exceptions.CertPathException;
+import extraUtil.exceptions.PasswordException;
+import extraUtil.exceptions.UserNotFoundException;
+import extraUtil.exceptions.WrongCredentials;
 import extraUtil.AlertBox;
 import extraUtil.ConfirmBox;
-import extraUtil.Hashing;
 import extraUtil.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -20,10 +19,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 
 
 public class LoginController {
@@ -31,6 +26,7 @@ public class LoginController {
     //  - verify certificate of login user
 
     private static final String PATH_TO_CERTS = "CRL/certs";
+    private static final String CERTIFICATE_EXTENSION = "*.crt";
 
     @FXML
     private TextField usernameTextField;
@@ -48,7 +44,7 @@ public class LoginController {
         fileChooser.setTitle("Find certificate");
         fileChooser.setInitialDirectory(new File(PATH_TO_CERTS));
         fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Certificate files", "*.crt")
+                new FileChooser.ExtensionFilter("Certificate files", CERTIFICATE_EXTENSION)
         );
 
         // this is for removing warning: GtkDialog mapped without a transient parent.
@@ -105,14 +101,15 @@ public class LoginController {
 
     public void mainApplication(ActionEvent event) {
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("mainApp.fxml"));
+            Parent root = FXMLLoader.load(getClass().getResource("../views/mainApp.fxml"));
             Scene scene = new Scene(root);
             Stage stage = new Stage();
             stage.setScene(scene);
             stage.setTitle("Main application");
             ((Stage) loginBorderPane.getScene().getWindow()).close();
-            File f = new File("css/mainApp.css");
+            File f = new File("src/views/css/mainApp.css");
             scene.getStylesheets().add("file:///" + f.getAbsolutePath().replace("\\", "/"));
+
             stage.show();
 
             scene.getWindow().setOnCloseRequest(e -> {

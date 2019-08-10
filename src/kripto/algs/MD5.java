@@ -1,4 +1,4 @@
-package extraUtil;
+package kripto.algs;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.util.Base64;
 
 public class MD5 {

@@ -1,8 +1,9 @@
 package extraUtil;
 
-import exceptions.CertPathException;
-import exceptions.PasswordException;
-import exceptions.WrongCredentials;
+import extraUtil.exceptions.CertPathException;
+import extraUtil.exceptions.PasswordException;
+import extraUtil.exceptions.WrongCredentials;
+import kripto.Hashing;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.*;

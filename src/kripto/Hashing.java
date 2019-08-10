@@ -1,4 +1,4 @@
-package extraUtil;
+package kripto;
 
 import org.bouncycastle.jcajce.provider.digest.BCMessageDigest;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;

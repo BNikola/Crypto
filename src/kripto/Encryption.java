@@ -1,6 +1,6 @@
-package extraUtil;
+package kripto;
 
-import kripto.algs.CryptoAlg;
+import extraUtil.Test;
 import kripto.algs.MyAES;
 import kripto.algs.MyCamellia;
 import kripto.algs.MyDES;
@@ -29,6 +29,7 @@ public class Encryption {
     //  - add init() to functions
     //  - replace file input/output streams with file paths
     //  - add certificate validation when it is being used
+    //  - change css folder location
 
     private static void init() {
         Security.addProvider(new BouncyCastleProvider());

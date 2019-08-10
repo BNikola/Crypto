@@ -1,4 +1,4 @@
-package kripto;
+package controllers;
 
 import extraUtil.ConfirmBox;
 import extraUtil.User;
@@ -14,7 +14,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -30,6 +29,9 @@ public class MainAppController implements Initializable {
 
     public static User user;
     private static final String PATH_TO_CERTS = "CRL/certs";
+    private static final String DEFAULT_DIR = System.getProperty("user.dir");
+    private static final String CERTIFICATE_EXTENSION = "*.crt";
+    private static final String OUTPUT_EXTENSION_ENC = "*.enc";
 
 
     // region FXML members
@@ -96,6 +98,7 @@ public class MainAppController implements Initializable {
 
     // region Encryption and decryption
     public void encrypt(ActionEvent event) {
+        // todo - populate this list with something meaningful
         List<String> listA = new ArrayList<>();
         listA.add("Name");
         listA.add("This is some text for something");
@@ -110,22 +113,22 @@ public class MainAppController implements Initializable {
 
     // region Browse buttons
     public void findFileEnc(ActionEvent event) {
-        findFile("Find file to encrypt", System.getProperty("user.dir"), "Java files", "*.java", filePathTextFieldEnc);
+        findFile("Find file to encrypt", DEFAULT_DIR, "Java files", "*.java", filePathTextFieldEnc);
     }
 
     public void findFileDec(ActionEvent event) {
-        findFile("Find file to decrypt", System.getProperty("user.dir"), "Text files", "*.txt", filePathTextFieldDec);
+        findFile("Find file to decrypt", DEFAULT_DIR, "Text files", OUTPUT_EXTENSION_ENC, filePathTextFieldDec);
     }
 
     public void findCert(ActionEvent actionEvent) {
-        findFile("Find certificate", PATH_TO_CERTS, "Certificate files", "*.crt", userCertTextFieldEnc);
+        findFile("Find certificate", PATH_TO_CERTS, "Certificate files", CERTIFICATE_EXTENSION, userCertTextFieldEnc);
     }
 
     public void findDirToOutputEnc(ActionEvent event) {
-        findDir("Find directory to output encrypted files", System.getProperty("user.dir"), outputPathTextFieldEnc);
+        findDir("Find directory to output encrypted files", DEFAULT_DIR, outputPathTextFieldEnc);
     }
     public void findDirToOutputDec(ActionEvent event) {
-        findDir("Find directory to output decrypted files", System.getProperty("user.dir"), outputPathTextFieldDec);
+        findDir("Find directory to output decrypted files", DEFAULT_DIR, outputPathTextFieldDec);
     }
     // endregion
 
@@ -136,13 +139,13 @@ public class MainAppController implements Initializable {
 
     public void backToLogIn(MouseEvent event) {
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("login.fxml"));
+            Parent root = FXMLLoader.load(getClass().getResource("../views/login.fxml"));
             Scene scene = new Scene(root);
             Stage stage = new Stage();
             stage.setScene(scene);
             stage.setTitle("Main application");
             ((Stage) mainBorderPane.getScene().getWindow()).close();
-            File f = new File("css/login.css");
+            File f = new File("src/views/css/login.css");
             scene.getStylesheets().add("file:///" + f.getAbsolutePath().replace("\\", "/"));
             stage.show();
 
