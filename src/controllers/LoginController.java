@@ -19,6 +19,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 
 public class LoginController {
@@ -58,46 +59,18 @@ public class LoginController {
         try {
             validationOfData();
             mainApplication(actionEvent);
-        } catch (UserNotFoundException e) {
-            notifyIncorrectData(e);
-        } catch (PasswordException e) {
-            notifyIncorrectData(e);
-        } catch (CertPathException e) {
-            notifyIncorrectData(e);
-        } catch (WrongCredentials e) {
+        } catch (UserNotFoundException | PasswordException | CertPathException | WrongCredentials | FileNotFoundException e) {
             notifyIncorrectData(e);
         }
     }
 
-    // validates user credentials, password, and path to certificate
-    private void validationOfData() throws UserNotFoundException, PasswordException, CertPathException, WrongCredentials {
-        if (usernameTextField.getText().length() == 0) {
-            throw new UserNotFoundException();
-        } else if (passwordTextField.getText().length() == 0) {
-            throw new PasswordException();
-        } else if (certificateTextField.getText().length() == 0) {
-            throw new CertPathException();
-        } else {
-            // create user for main app
-            MainAppController.user = new User(usernameTextField.getText(), certificateTextField.getText(), passwordTextField.getText());
-        }
-    }
+
 
     public void cancelLogin(ActionEvent actionEvent) {
         ((Stage)loginBorderPane.getScene().getWindow()).close();
     }
 
-    private void notifyIncorrectData(Exception e) {
-        if (e instanceof UserNotFoundException) {
-            AlertBox.display("Wrong username", "You have entered the wrong username!");
-        } else if (e instanceof PasswordException) {
-            AlertBox.display("Wrong password", "You have entered the wrong password!");
-        } else if (e instanceof CertPathException) {
-            AlertBox.display("Wrong path to cert", "You have entered the wrong path to certificate!");
-        } else if (e instanceof WrongCredentials) {
-            AlertBox.display("Wrong credencials", "Please input the correct credentials!");
-        }
-    }
+
 
     public void mainApplication(ActionEvent event) {
         try {
@@ -114,7 +87,7 @@ public class LoginController {
 
             scene.getWindow().setOnCloseRequest(e -> {
                 e.consume();
-                Boolean answer = ConfirmBox.display("Warning!", "Are you sure you want to exit?");
+                boolean answer = ConfirmBox.display("Warning!", "Are you sure you want to exit?");
                 if (answer) {
                     stage.close();
                 }
@@ -124,5 +97,45 @@ public class LoginController {
             e.printStackTrace();
         }
     }
+
+
+    // region Private methods
+    // validates user credentials, password, and path to certificate
+    private void validationOfData() throws UserNotFoundException, PasswordException, CertPathException, WrongCredentials, FileNotFoundException {
+        if (usernameTextField.getText().length() == 0) {
+            throw new UserNotFoundException();
+        } else if (passwordTextField.getText().length() == 0) {
+            throw new PasswordException();
+        } else if (certificateTextField.getText().length() == 0) {
+            throw new CertPathException();
+        }
+        // validate path to user cert
+        validatePathToFile(certificateTextField.getText());
+
+        // create user for main app
+        MainAppController.user = new User(usernameTextField.getText(), certificateTextField.getText(), passwordTextField.getText());
+    }
+
+    private void notifyIncorrectData(Exception e) {
+        if (e instanceof UserNotFoundException) {
+            AlertBox.display("Wrong username", "You have entered the wrong username!");
+        } else if (e instanceof PasswordException) {
+            AlertBox.display("Wrong password", "You have entered the wrong password!");
+        } else if (e instanceof CertPathException) {
+            AlertBox.display("Wrong path to cert", "You have entered the wrong path to certificate!");
+        } else if (e instanceof WrongCredentials) {
+            AlertBox.display("Wrong credencials", "Please input the correct credentials!");
+        } else if (e instanceof FileNotFoundException) {
+            AlertBox.display("Wrong path to cert", "That file does not exist");
+        }
+    }
+
+    private void validatePathToFile(String path) throws FileNotFoundException {
+        File file = new File(path);
+        if (!file.exists()) {
+            throw new FileNotFoundException();
+        }
+    }
+    // endregion
 
 }

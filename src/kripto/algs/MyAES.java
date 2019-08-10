@@ -20,8 +20,8 @@ public class MyAES {
 
 
     // buffers to transfer bytes from one stream to another
-    byte[] buf = new byte[16];
-    byte[] obuf = new byte[512];
+    private byte[] buf = new byte[16];
+    private byte[] obuf = new byte[512];
     private byte[] key = null;
 
     // region Constructors
@@ -152,11 +152,7 @@ public class MyAES {
             b.decrypt(new FileInputStream("umirem.txt"), new FileOutputStream("dekriptovano2.txt"));
 
 
-        } catch (InvalidCipherTextException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (InvalidCipherTextException | IOException e) {
             e.printStackTrace();
         }
 

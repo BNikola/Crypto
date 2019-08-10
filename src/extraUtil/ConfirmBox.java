@@ -12,7 +12,7 @@ import javafx.stage.Stage;
 
 public class ConfirmBox {
 
-    static boolean answer;
+    private static boolean answer;
 
 
     // confirm box for reuse

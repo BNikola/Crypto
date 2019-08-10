@@ -36,14 +36,14 @@ import java.security.SecureRandom;
 
 public class DESede_BC extends CryptoAlg {
 
-    PaddedBufferedBlockCipher encryptCipher;
-    PaddedBufferedBlockCipher decryptCipher;
+    private PaddedBufferedBlockCipher encryptCipher;
+    private PaddedBufferedBlockCipher decryptCipher;
 
     // Buffers used to transport the bytes from one stream to another
-    byte[] buf = new byte[8];       //input buffer - block size length
-    byte[] obuf = new byte[512];    //output buffer
+    private byte[] buf = new byte[8];       //input buffer - block size length
+    private byte[] obuf = new byte[512];    //output buffer
 
-    byte[] key = null;              //the key
+    private byte[] key = null;              //the key
 
     public DESede_BC(){
         SecureRandom secureRandom = new SecureRandom();
@@ -142,15 +142,7 @@ public class DESede_BC extends CryptoAlg {
         try {
             a.encrypt(new FileInputStream("Biljeske.txt"), 2, new FileOutputStream("sifra.txt"));
             a.decrypt(new FileInputStream("sifra.txt"), 2, new FileOutputStream("dekriptovano.txt"));
-        } catch (ShortBufferException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidCipherTextException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
+        } catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException | InvalidCipherTextException | FileNotFoundException e) {
             e.printStackTrace();
         }
     }

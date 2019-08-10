@@ -41,31 +41,35 @@ public class UniversalAlgorithm {
     public UniversalAlgorithm(String algorithmName) {
         InitProvider();
         this.algorithmName = algorithmName;
-        if (algorithmName.equals("AES")) {
-            // generate key for aes
-            KEY_LENGTH = 32;
-            try {
-                KeyGenerator keyGenerator = KeyGenerator.getInstance("AES", "BC");
-                keyGenerator.init(KEY_LENGTH);
-                key = keyGenerator.generateKey().getEncoded();
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            } catch (NoSuchProviderException e) {
-                e.printStackTrace();
+        switch (algorithmName) {
+            case "AES":
+                // generate key for aes
+                KEY_LENGTH = 32;
+                try {
+                    KeyGenerator keyGenerator = KeyGenerator.getInstance("AES", "BC");
+                    keyGenerator.init(KEY_LENGTH);
+                    key = keyGenerator.generateKey().getEncoded();
+                } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "CAMELLIA": {
+                // generate key for camellia
+                KEY_LENGTH = 32;
+                key = new byte[KEY_LENGTH];
+                SecureRandom secureRandom = new SecureRandom();
+                secureRandom.nextBytes(key);
+                break;
             }
-        } else if (algorithmName.equals("CAMELLIA")) {
-            // generate key for camellia
-            KEY_LENGTH = 32;
-            key = new byte[KEY_LENGTH];
-            SecureRandom secureRandom = new SecureRandom();
-            secureRandom.nextBytes(key);
-        } else if (algorithmName.equals("DES3")) {
-            SecureRandom secureRandom = new SecureRandom();
-            DESedeKeyGenerator keyGenerator = new DESedeKeyGenerator();
-            // use 192 bit key - if i: 0 then key length is by default 192
-            keyGenerator.init(new KeyGenerationParameters(secureRandom, 0));
-            key = keyGenerator.generateKey();
-            // length of the key is 24
+            case "DES3": {
+                SecureRandom secureRandom = new SecureRandom();
+                DESedeKeyGenerator keyGenerator = new DESedeKeyGenerator();
+                // use 192 bit key - if i: 0 then key length is by default 192
+                keyGenerator.init(new KeyGenerationParameters(secureRandom, 0));
+                key = keyGenerator.generateKey();
+                // length of the key is 24
+                break;
+            }
         }
 
         // init ciphers
@@ -113,9 +117,7 @@ public class UniversalAlgorithm {
             // final write to out
             out.write(outBuffer, 0, noBytesProcessed);
             out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InvalidCipherTextException e) {
+        } catch (IOException | InvalidCipherTextException e) {
             e.printStackTrace();
         }
     }
@@ -135,9 +137,7 @@ public class UniversalAlgorithm {
             // final write to out
             out.write(outBuffer, 0, noBytesProcessed);
             out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InvalidCipherTextException e) {
+        } catch (IOException | InvalidCipherTextException e) {
             e.printStackTrace();
         }
     }
@@ -145,21 +145,25 @@ public class UniversalAlgorithm {
 
     // region Private methods
     private void InitCiphers (String algorithmName) {
-        if (algorithmName.equals("AES")) {
-            encryptCipher = new PaddedBufferedBlockCipher(new AESEngine());
-            encryptCipher.init(true, new KeyParameter(key));
-            decryptCipher = new PaddedBufferedBlockCipher(new AESEngine());
-            decryptCipher.init(false, new KeyParameter(key));
-        } else if (algorithmName.equals("CAMELLIA")) {
-            encryptCipher = new PaddedBufferedBlockCipher(new CamelliaEngine());
-            encryptCipher.init(true, new KeyParameter(key));
-            decryptCipher = new PaddedBufferedBlockCipher(new CamelliaEngine());
-            decryptCipher.init(false, new KeyParameter(key));
-        } else if (algorithmName.equals("DES3")) {
-            encryptCipher = new PaddedBufferedBlockCipher(new DESedeEngine());
-            encryptCipher.init(true, new KeyParameter(key));
-            decryptCipher = new PaddedBufferedBlockCipher(new DESedeEngine());
-            decryptCipher.init(false, new KeyParameter(key));
+        switch (algorithmName) {
+            case "AES":
+                encryptCipher = new PaddedBufferedBlockCipher(new AESEngine());
+                encryptCipher.init(true, new KeyParameter(key));
+                decryptCipher = new PaddedBufferedBlockCipher(new AESEngine());
+                decryptCipher.init(false, new KeyParameter(key));
+                break;
+            case "CAMELLIA":
+                encryptCipher = new PaddedBufferedBlockCipher(new CamelliaEngine());
+                encryptCipher.init(true, new KeyParameter(key));
+                decryptCipher = new PaddedBufferedBlockCipher(new CamelliaEngine());
+                decryptCipher.init(false, new KeyParameter(key));
+                break;
+            case "DES3":
+                encryptCipher = new PaddedBufferedBlockCipher(new DESedeEngine());
+                encryptCipher.init(true, new KeyParameter(key));
+                decryptCipher = new PaddedBufferedBlockCipher(new DESedeEngine());
+                decryptCipher.init(false, new KeyParameter(key));
+                break;
         }
     }
 

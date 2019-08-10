@@ -26,11 +26,7 @@ public class MD5 {
         // todo - delete everything that is not useful
 //        System.out.println("Validation");
 //        System.out.println("aaa: " + tmp.equals(hash));
-        if (tmp.equals(hash)) {
-            return true;
-        } else {
-            return false;
-        }
+        return tmp.equals(hash);
     }
 
     public static byte[] getSalt() throws GeneralSecurityException {
@@ -67,11 +63,7 @@ public class MD5 {
 
 
 
-        } catch (GeneralSecurityException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (GeneralSecurityException | IOException e) {
             e.printStackTrace();
         }
 

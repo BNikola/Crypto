@@ -57,11 +57,7 @@ public class User {
 
                 this.pathToPrivateKey = line[3];
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (GeneralSecurityException e) {
+        } catch (IOException | GeneralSecurityException e) {
             e.printStackTrace();
         }
     }

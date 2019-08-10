@@ -1,7 +1,9 @@
 package controllers;
 
+import extraUtil.AlertBox;
 import extraUtil.ConfirmBox;
 import extraUtil.User;
+import extraUtil.exceptions.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -19,7 +21,9 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URL;
+import java.nio.file.NotDirectoryException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -31,7 +35,7 @@ public class MainAppController implements Initializable {
     private static final String PATH_TO_CERTS = "CRL/certs";
     private static final String DEFAULT_DIR = System.getProperty("user.dir");
     private static final String CERTIFICATE_EXTENSION = "*.crt";
-    private static final String OUTPUT_EXTENSION_ENC = "*.enc";
+    private static final String OUTPUT_EXTENSION_ENC = "*.txt";
 
 
     // region FXML members
@@ -98,7 +102,14 @@ public class MainAppController implements Initializable {
 
     // region Encryption and decryption
     public void encrypt(ActionEvent event) {
-        // todo - populate this list with something meaningful
+        // todo
+        //  - populate this list with something meaningful
+        //  - validate all the paths
+        try {
+            validationOfDataEnc();
+        } catch (NotDirectoryException | FieldMissingException | FileNotFoundException e) {
+            notifyIncorrectData(e);
+        }
         List<String> listA = new ArrayList<>();
         listA.add("Name");
         listA.add("This is some text for something");
@@ -108,6 +119,11 @@ public class MainAppController implements Initializable {
     }
 
     public void decrypt(ActionEvent event) {
+        try {
+            validationOfDataDec();
+        } catch (NotDirectoryException | FieldMissingException | FileNotFoundException e) {
+            notifyIncorrectData(e);
+        }
     }
     // endregion
 
@@ -125,10 +141,10 @@ public class MainAppController implements Initializable {
     }
 
     public void findDirToOutputEnc(ActionEvent event) {
-        findDir("Find directory to output encrypted files", DEFAULT_DIR, outputPathTextFieldEnc);
+        findDir("Find directory to output encrypted files", outputPathTextFieldEnc);
     }
     public void findDirToOutputDec(ActionEvent event) {
-        findDir("Find directory to output decrypted files", DEFAULT_DIR, outputPathTextFieldDec);
+        findDir("Find directory to output decrypted files", outputPathTextFieldDec);
     }
     // endregion
 
@@ -137,7 +153,7 @@ public class MainAppController implements Initializable {
         backToLogIn(mouseEvent);
     }
 
-    public void backToLogIn(MouseEvent event) {
+    private void backToLogIn(MouseEvent event) {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("../views/login.fxml"));
             Scene scene = new Scene(root);
@@ -151,7 +167,7 @@ public class MainAppController implements Initializable {
 
             scene.getWindow().setOnCloseRequest(e -> {
                 e.consume();
-                Boolean answer = ConfirmBox.display("Warning!", "Are you sure you want to log out?");
+                boolean answer = ConfirmBox.display("Warning!", "Are you sure you want to log out?");
                 if (answer) {
                     stage.close();
                 }
@@ -172,7 +188,7 @@ public class MainAppController implements Initializable {
     // endregion
 
     // region Private methods
-    public void findFile(String title, String startDir, String extensionFilter, String filter, TextField textField) {
+    private void findFile(String title, String startDir, String extensionFilter, String filter, TextField textField) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(title);
         fileChooser.setInitialDirectory(new File(startDir));
@@ -187,13 +203,67 @@ public class MainAppController implements Initializable {
         }
     }
 
-    public void findDir(String title, String startDir, TextField textField) {
+    private void findDir(String title, TextField textField) {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle(title);
-        directoryChooser.setInitialDirectory(new File(startDir));
+        directoryChooser.setInitialDirectory(new File(MainAppController.DEFAULT_DIR));
         File file = directoryChooser.showDialog(mainBorderPane.getScene().getWindow());
         if (file != null) {
             textField.setText(file.getAbsolutePath());
+        }
+    }
+
+    private void validatePathToFile(String path) throws FileNotFoundException {
+        File file = new File(path);
+        if (!file.exists()) {
+            throw new FileNotFoundException();
+        }
+    }
+
+    private void validatePathToDir(String path) throws FileNotFoundException, NotDirectoryException {
+        File file = new File(path);
+        if (!file.exists()) {
+            throw new FileNotFoundException();
+        } else if (!file.isDirectory()) {
+            throw new NotDirectoryException(path);
+        }
+    }
+
+    private void validationOfDataEnc() throws FileNotFoundException, FieldMissingException, NotDirectoryException {
+        // if a field is empty
+        if (filePathTextFieldEnc.getText().length() == 0
+                || outputPathTextFieldEnc.getText().length() == 0
+                || userCertTextFieldEnc.getText().length() == 0
+                || outputFileNameTextFieldEnc.getText().length() == 0
+        ) {
+            throw new FieldMissingException();
+        }
+        // todo - change validate path to file to validate path to cert and throw new certException
+        validatePathToFile(filePathTextFieldEnc.getText());
+        validatePathToDir(outputPathTextFieldEnc.getText());
+        validatePathToFile(userCertTextFieldEnc.getText());
+    }
+
+    private void validationOfDataDec() throws FileNotFoundException, FieldMissingException, NotDirectoryException {
+        // if a field is empty
+        if (filePathTextFieldDec.getText().length() == 0
+                || outputPathTextFieldDec.getText().length() == 0
+        ) {
+            throw new FieldMissingException();
+        }
+        validatePathToFile(filePathTextFieldDec.getText());
+        validatePathToDir(outputPathTextFieldDec.getText());
+    }
+
+    private void notifyIncorrectData(Exception e) {
+        if (e instanceof FieldMissingException) {
+            AlertBox.display("Missing field", "Please fill all fields");
+        } else if (e instanceof CertPathException) {
+            AlertBox.display("Wrong path to cert", "You have entered the wrong path to certificate!");
+        } else if (e instanceof FileNotFoundException) {
+            AlertBox.display("Wrong path to cert", "That file does not exist");
+        } else if (e instanceof NotDirectoryException) {
+            AlertBox.display("Wrong path to directory", "That directory does not exist");
         }
     }
 

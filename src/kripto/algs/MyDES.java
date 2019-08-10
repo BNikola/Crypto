@@ -22,8 +22,8 @@ public class MyDES {
 
 
     // buffers to transfer bytes from one stream to another
-    byte[] buf = new byte[16];
-    byte[] obuf = new byte[512];
+    private byte[] buf = new byte[16];
+    private byte[] obuf = new byte[512];
     private byte[] key = null;
 
     // region Constructors
