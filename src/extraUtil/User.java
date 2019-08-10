@@ -4,15 +4,13 @@ import extraUtil.exceptions.CertPathException;
 import extraUtil.exceptions.PasswordException;
 import extraUtil.exceptions.WrongCredentials;
 import kripto.Hashing;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import kripto.algs.CertUtil;
 
-import java.io.*;
-import java.security.*;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
 
 public class User {
 
@@ -56,6 +54,9 @@ public class User {
                 }
 
                 this.pathToPrivateKey = line[3];
+
+                this.certificate = CertUtil.loadCert(pathToCert);
+                this.privateKey = CertUtil.loadKey(pathToPrivateKey);
             }
         } catch (IOException | GeneralSecurityException e) {
             e.printStackTrace();
@@ -112,31 +113,7 @@ public class User {
 
     // endregion
 
-    public X509Certificate loadCert() throws CertificateException, FileNotFoundException {
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        X509Certificate cert;
-        cert = (X509Certificate) cf.generateCertificate(new FileInputStream(pathToCert));   // read cert in X509 format
-        return cert;
-    }
 
-    public PrivateKey loadKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        Security.addProvider(new BouncyCastleProvider());
-
-        // key for user cert
-        PrivateKey key;
-        File f = new File(pathToPrivateKey);
-        DataInputStream dis = new DataInputStream(new FileInputStream(f));
-        byte[] privateUserKey = new byte[(int) f.length()];         // creating byte array for reading key
-        dis.read(privateUserKey);           // reading the key
-        dis.close();
-
-        // creating the key
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");  // rsa is used for private keys
-        PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(privateUserKey); //PKCS8 contains pair of keys pub and priv
-        key = keyFactory.generatePrivate(privateSpec);
-
-        return key;
-    }
 
     @Override
     public String toString() {

@@ -23,8 +23,6 @@ import java.io.FileNotFoundException;
 
 
 public class LoginController {
-    // todo
-    //  - verify certificate of login user
 
     private static final String PATH_TO_CERTS = "CRL/certs";
     private static final String CERTIFICATE_EXTENSION = "*.crt";

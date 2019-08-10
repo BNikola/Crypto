@@ -34,7 +34,7 @@ import javax.crypto.ShortBufferException;
 import java.io.*;
 import java.security.SecureRandom;
 
-public class DESede_BC extends CryptoAlg {
+public class DESede_BC extends CertUtil {
 
     private PaddedBufferedBlockCipher encryptCipher;
     private PaddedBufferedBlockCipher decryptCipher;

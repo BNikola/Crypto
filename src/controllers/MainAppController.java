@@ -19,11 +19,20 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import kripto.algs.CertUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.NotDirectoryException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.cert.CRLException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,10 +41,13 @@ import java.util.ResourceBundle;
 public class MainAppController implements Initializable {
 
     public static User user;
+    private static final String PATH_TO_ROOT_CERT = "/home/korisnik/Faks/Projektni/CRL/rootca.crt";
+    private static final String PATH_TO_CRL = "/home/korisnik/Faks/Projektni/CRL/crl/rootcrl.pem";
     private static final String PATH_TO_CERTS = "CRL/certs";
     private static final String DEFAULT_DIR = System.getProperty("user.dir");
     private static final String CERTIFICATE_EXTENSION = "*.crt";
     private static final String OUTPUT_EXTENSION_ENC = "*.txt";
+    private X509Certificate rootCert;
 
 
     // region FXML members
@@ -98,21 +110,36 @@ public class MainAppController implements Initializable {
         algorithmComboBox.getItems().add("CAMELLIA");
         algorithmComboBox.getItems().add("DES3");
         algorithmComboBox.getSelectionModel().selectFirst();
+        try {
+            rootCert = CertUtil.loadCert(PATH_TO_ROOT_CERT);
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     // region Encryption and decryption
     public void encrypt(ActionEvent event) {
         // todo
         //  - populate this list with something meaningful
-        //  - validate all the paths
         try {
             validationOfDataEnc();
+            CertUtil.checkValidityOfCertificate(user.getCertificate(), rootCert, PATH_TO_CRL);
         } catch (NotDirectoryException | FieldMissingException | FileNotFoundException e) {
             notifyIncorrectData(e);
+        } catch (SignatureException | CertificateOnCRLException | InvalidKeyException | NoSuchAlgorithmException | CertificateException e) {
+            AlertBox.display("Certificate error", "Your certificate is not valid");
+        } catch (CRLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
         }
         List<String> listA = new ArrayList<>();
-        listA.add("Name");
-        listA.add("This is some text for something");
+        listA.add(user.getUsername());
+        listA.add(user.getPathToCert());
         listA.add(new Date().toString());
         ObservableList<String> list = FXCollections.observableList(listA);
         reportListViewEnc.setItems(list);

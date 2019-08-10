@@ -23,13 +23,11 @@ import java.security.spec.PKCS8EncodedKeySpec;
 public class Encryption {
 
     // todo
-    //  - create class for RSA and certs
-    //  - create methods for reading private key, reading x509
+    //  - create class for RSA
     //  - add hash of the document
     //  - add init() to functions
     //  - replace file input/output streams with file paths
     //  - add certificate validation when it is being used
-    //  - change css folder location
 
     private static void init() {
         Security.addProvider(new BouncyCastleProvider());
