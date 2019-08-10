@@ -124,6 +124,7 @@ public class LoginController {
             });
         } catch (Exception e) {
             System.out.println("Exception in switching to main application");
+            e.printStackTrace();
         }
     }
 

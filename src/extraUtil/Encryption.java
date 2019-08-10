@@ -25,14 +25,10 @@ public class Encryption {
     // todo
     //  - create class for RSA and certs
     //  - create methods for reading private key, reading x509
-    //  - add user class
-    //  - add path to user to file users (path to certs and keys)
     //  - add hash of the document
     //  - add init() to functions
     //  - replace file input/output streams with file paths
     //  - add certificate validation when it is being used
-    //  - add validation of file and directory paths
-    //  - create certificates and folder ctructure
 
     private static void init() {
         Security.addProvider(new BouncyCastleProvider());

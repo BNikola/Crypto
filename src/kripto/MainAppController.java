@@ -2,6 +2,8 @@ package kripto;
 
 import extraUtil.ConfirmBox;
 import extraUtil.User;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -13,17 +15,31 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class MainAppController implements Initializable {
 
     public static User user;
+    private static final String PATH_TO_CERTS = "CRL/certs";
+
+
 
     // region FXML members
+    @FXML
+    private BorderPane mainBorderPane;
+    @FXML
+    private Label userLabel;
+    @FXML
+    private Label logOutLabel;
     @FXML
     private Tab encryptTab;
     @FXML
@@ -55,16 +71,14 @@ public class MainAppController implements Initializable {
     @FXML
     private Button decryptButton;
     @FXML
-    private Label userLabel;
+    private ListView reportListViewEnc;
     @FXML
-    private Label logOutLabel;
-    @FXML
-    private BorderPane mainBorderPane;
+    private ListView reportListViewDec;
     // endregion
 
     // todo
-    //  - implement methods
-    //  - make function for file and dir chooser
+    //  - implement methods for encrypt and decrypt
+    //  - figure out what to output for result
 
 
 
@@ -79,15 +93,42 @@ public class MainAppController implements Initializable {
         algorithmComboBox.getSelectionModel().selectFirst();
     }
 
-    public void findFile(ActionEvent event) {
+    // region Encryption and decryption
+    public void encrypt(ActionEvent event) {
+        List<String> listA = new ArrayList<>();
+        listA.add("Name");
+        listA.add("This is some text for something");
+        listA.add(new Date().toString());
+        ObservableList<String> list = FXCollections.observableList(listA);
+        reportListViewEnc.setItems(list);
     }
 
-    public void findDirToOutput(ActionEvent event) {
+    public void decrypt(ActionEvent event) {
+    }
+    // endregion
+
+    // region Browse buttons
+    public void findFileEnc(ActionEvent event) {
+        findFile("Find file to encrypt", System.getProperty("user.dir"), "Java files", "*.java", filePathTextFieldEnc);
     }
 
-    public void findCert(ActionEvent event) {
+    public void findFileDec(ActionEvent event) {
+        findFile("Find file to decrypt", System.getProperty("user.dir"), "Text files", "*.txt", filePathTextFieldDec);
     }
 
+    public void findCert(ActionEvent actionEvent) {
+        findFile("Find certificate", PATH_TO_CERTS, "Certificate files", "*.crt", userCertTextFieldEnc);
+    }
+
+    public void findDirToOutputEnc(ActionEvent event) {
+        findDir("Find directory to output encrypted files", System.getProperty("user.dir"), outputPathTextFieldEnc);
+    }
+    public void findDirToOutputDec(ActionEvent event) {
+        findDir("Find directory to output decrypted files", System.getProperty("user.dir"), outputPathTextFieldDec);
+    }
+    // endregion
+
+    // region Log out
     public void logOut(MouseEvent mouseEvent) {
         backToLogIn(mouseEvent);
     }
@@ -124,4 +165,33 @@ public class MainAppController implements Initializable {
         mainBorderPane.getScene().setCursor(Cursor.DEFAULT);
 
     }
+    // endregion
+
+    // region Private methods
+    public void findFile(String title, String startDir, String extensionFilter, String filter, TextField textField) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(title);
+        fileChooser.setInitialDirectory(new File(startDir));
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter(extensionFilter, filter)
+        );
+
+        // this is for removing warning: GtkDialog mapped without a transient parent.
+        File file = fileChooser.showOpenDialog(mainBorderPane.getScene().getWindow());
+        if (file != null) {
+            textField.setText(file.getAbsolutePath());
+        }
+    }
+
+    public void findDir(String title, String startDir, TextField textField) {
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        directoryChooser.setTitle(title);
+        directoryChooser.setInitialDirectory(new File(startDir));
+        File file = directoryChooser.showDialog(mainBorderPane.getScene().getWindow());
+        if (file != null) {
+            textField.setText(file.getAbsolutePath());
+        }
+    }
+
+    // endregion
 }
