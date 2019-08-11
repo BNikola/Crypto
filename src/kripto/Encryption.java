@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
@@ -178,31 +179,32 @@ public class Encryption {
     }
 
     // when encrypting, generate key and store it into file
-    public static void encryption(String pathToInput, String pathToOutput, String symmetricAlgorithm) {
+    public static void encryption(String pathToInput, String pathToOutput, String symmetricAlgorithm, String pathToUserCert) throws CertificateException, FileNotFoundException {
         UniversalAlgorithm algorithm = new UniversalAlgorithm(symmetricAlgorithm);
+        X509Certificate userCert = CertUtil.loadCert(pathToUserCert);
         try (InputStream in = new FileInputStream(pathToInput); OutputStream out = new FileOutputStream(pathToOutput)) {
             // writing data for decryption and encrypting with certificate
             // separator
             byte[] separator = CertUtil.encryptAsymmetric(
                     "\n##############################\n".getBytes(StandardCharsets.UTF_8),
-                    MainAppController.user.getCertificate());
+                    userCert);
             // userName
             out.write(
                     CertUtil.encryptAsymmetric(
                             MainAppController.user.getUsername().getBytes(StandardCharsets.UTF_8),
-                            MainAppController.user.getCertificate()));
+                            userCert));
             out.write(separator);
             // symmetric algorithm name
             out.write(
                     CertUtil.encryptAsymmetric(
                             algorithm.getAlgorithmName().getBytes(StandardCharsets.UTF_8),
-                            MainAppController.user.getCertificate()));
+                            userCert));
             out.write(separator);
             // symmetric algorithm key
             out.write(
                     CertUtil.encryptAsymmetric(
                             algorithm.getKey(),
-                            MainAppController.user.getCertificate()));
+                            userCert));
             out.write(separator);
             // create hash of the file
             ByteArrayInputStream bais = new ByteArrayInputStream(in.readAllBytes());
@@ -214,7 +216,12 @@ public class Encryption {
             out.write(
                     CertUtil.encryptAsymmetric(
                             hash,
-                            MainAppController.user.getCertificate()));
+                            userCert));
+            out.write(separator);
+            out.write(
+                    CertUtil.encryptAsymmetric(
+                            parseData(data).getBytes(StandardCharsets.UTF_8),
+                            userCert));
             out.write(separator);
 
             algorithm.encrypt(bais, out);
@@ -231,17 +238,36 @@ public class Encryption {
         }
     }
 
+    // parses file to determine file name
+    public static String parseData(String data) {
+        // todo - make this better
+        String className = "";
+//        if (data.contains("public static void main")) {
+            System.out.println("Sadrzi main");
+            int startIndex = data.indexOf("class");
+            int endIndex = data.indexOf('{', startIndex);
+            String[] classNameLine = data.substring(startIndex, endIndex).split(" ");
+            int indexOfClass = className.indexOf("class");
+        System.out.println(indexOfClass);
+        // todo - this returns class not class name
+            className = classNameLine[indexOfClass + 1];
+//        }
+        return className;
+    }
+
     // when decrypting, remember to skip separator
     public static void decryption(String pathToInput, String pathToOutput) {
-        try (InputStream in = new FileInputStream(pathToInput); OutputStream out = new FileOutputStream(pathToOutput)) {
+        try (InputStream in = new FileInputStream(pathToInput)) {
             // reader for header
+
             // todo - get certificate of the user
+            //  - add file name to enc and dec
             byte[] reader = new byte[256];  // 256 is the size of RSA encryption
             // read username
             in.read(reader);
             String userName = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
-            System.out.println(userName);
             // check validity of certificate CertUtil.checkValidityOfCertificate(new User());
+//            X509Certificate senderCert = CertUtil.loadCertFromUsername(userName); todo - test this later
             // read separator
             in.read(reader);
             System.out.println(new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey())));
@@ -267,10 +293,16 @@ public class Encryption {
             in.read(reader);
             System.out.println(new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey())));
             // read separator
+            in.read(reader);
+            String fileName = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
+            System.out.println(fileName + "|");
+            OutputStream out = new FileOutputStream(pathToOutput + File.separator + fileName);
+            in.read(reader);
             // create algorithm and call decrypt
             UniversalAlgorithm algorithm = new UniversalAlgorithm(algorithmName, algorithmKey);
             System.out.println(algorithm.getKey().length);
             algorithm.decrypt(in, out);
+            out.close();
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
