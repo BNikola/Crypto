@@ -4,10 +4,7 @@ import extraUtil.exceptions.CertificateOnCRLException;
 import kripto.Hashing;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -24,6 +21,29 @@ public class CertUtil {
         return cert;
     }
 
+    public static X509Certificate loadCertFromUsername(String username) {
+        File users = new File("/home/korisnik/Faks/Projektni/users.txt");
+        String pathToCert = "";
+        X509Certificate cert = null;
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(users))) {
+            String line = "";
+            while ((line = bufferedReader.readLine()) != null) {
+                String [] lineArray = line.split("#");
+                if (lineArray[0].equals(username)) {
+                    pathToCert = lineArray[2];
+                }
+            }
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            cert = (X509Certificate) cf.generateCertificate(new FileInputStream(pathToCert));   // read cert in X509 format
+            return cert;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        }
+        return cert;
+    }
+
     public static X509CRL loadCRL(String pathToCRL) throws CertificateException, CRLException, IOException {
         InputStream inputStream = new FileInputStream(pathToCRL);
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
@@ -32,8 +52,8 @@ public class CertUtil {
             return crl;
 
     }
-
     // keys must be in DER format
+
     public static PrivateKey loadKey(String pathToPrivateKey) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         Security.addProvider(new BouncyCastleProvider());
 
@@ -90,7 +110,6 @@ public class CertUtil {
         return cipherText;
     }
 
-    // todo - resolve bad padding something - decrypt not working
     public static byte[] decryptAsymmetric(byte[] input, PrivateKey privateKey) throws GeneralSecurityException {
         byte[] decryptedText = null;
 

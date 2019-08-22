@@ -1,34 +1,30 @@
 package kripto;
 
-import com.sun.tools.javac.Main;
 import controllers.MainAppController;
-import extraUtil.Test;
+import extraUtil.AlertBox;
 import extraUtil.User;
 import extraUtil.exceptions.CertPathException;
 import extraUtil.exceptions.PasswordException;
 import extraUtil.exceptions.WrongCredentials;
+import extraUtil.exceptions.WrongSenderException;
 import kripto.algs.CertUtil;
 import kripto.algs.MyAES;
 import kripto.algs.MyCamellia;
 import kripto.algs.MyDES;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.util.io.pem.PemObject;
-import org.bouncycastle.util.io.pem.PemReader;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
 
 public class Encryption {
 
@@ -36,7 +32,6 @@ public class Encryption {
     //  - create class for RSA
     //  - add hash of the document
     //  - add init() to functions
-    //  - replace file input/output streams with file paths
     //  - add certificate validation when it is being used
 
     private static void init() {
@@ -218,14 +213,16 @@ public class Encryption {
                             hash,
                             userCert));
             out.write(separator);
+            // name of the file
+            Path p = Paths.get(pathToInput);
+            String fileName = p.getFileName().toString();
             out.write(
                     CertUtil.encryptAsymmetric(
-                            parseData(data).getBytes(StandardCharsets.UTF_8),
+                            fileName.getBytes(StandardCharsets.UTF_8),
                             userCert));
             out.write(separator);
 
             algorithm.encrypt(bais, out);
-//            algorithm.encrypt(in, out);
             out.flush();
             bais.close();
 
@@ -238,34 +235,19 @@ public class Encryption {
         }
     }
 
-    // parses file to determine file name
-    public static String parseData(String data) {
-        // todo - make this better
-        String className = "";
-//        if (data.contains("public static void main")) {
-            System.out.println("Sadrzi main");
-            int startIndex = data.indexOf("class");
-            int endIndex = data.indexOf('{', startIndex);
-            String[] classNameLine = data.substring(startIndex, endIndex).split(" ");
-            int indexOfClass = className.indexOf("class");
-        System.out.println(indexOfClass);
-        // todo - this returns class not class name
-            className = classNameLine[indexOfClass + 1];
-//        }
-        return className;
-    }
-
     // when decrypting, remember to skip separator
-    public static void decryption(String pathToInput, String pathToOutput) {
+    public static void decryption(String pathToInput, String pathToOutput, String sender) {
         try (InputStream in = new FileInputStream(pathToInput)) {
             // reader for header
 
             // todo - get certificate of the user
-            //  - add file name to enc and dec
             byte[] reader = new byte[256];  // 256 is the size of RSA encryption
             // read username
             in.read(reader);
             String userName = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
+            if (!userName.equals(sender)) {
+                throw new WrongSenderException();
+            }
             // check validity of certificate CertUtil.checkValidityOfCertificate(new User());
 //            X509Certificate senderCert = CertUtil.loadCertFromUsername(userName); todo - test this later
             // read separator
@@ -310,6 +292,8 @@ public class Encryption {
             e.printStackTrace();
         } catch (GeneralSecurityException e) {
             e.printStackTrace();
+        } catch (WrongSenderException e) {
+            AlertBox.display("Wrong Sender", "The file was not encrypted by this person.");
         }
     }
 
@@ -335,8 +319,8 @@ public class Encryption {
 //        }
         try {
             MainAppController.user = new User("Korisnik2", "/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt", "sigurnost2");
-//            Encryption.encryption("/home/korisnik/Faks/Projektni/src/extraUtil/Test.java", "sifra.txt", "AES");
-            Encryption.decryption("/home/korisnik/Faks/Projektni/kriptovaneDatoteke/test2.txt", "dekriptovano.txt");
+//            Encryption.encryption("/home/korisnik/Faks/Projektni/src/extraUtil/Test.java", "sifra.txt", "AES", "/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt");
+            Encryption.decryption("sifra.txt", "dekriptovaneDatoteke", "Korisnik2");
         } catch (WrongCredentials wrongCredentials) {
             wrongCredentials.printStackTrace();
         } catch (PasswordException e) {
@@ -344,6 +328,11 @@ public class Encryption {
         } catch (CertPathException e) {
             e.printStackTrace();
         }
+//        catch (CertificateException e) {
+//            e.printStackTrace();
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
     }
 }
 

@@ -99,6 +99,8 @@ public class MainAppController implements Initializable {
     private ListView reportListViewEnc;
     @FXML
     private ListView reportListViewDec;
+    @FXML
+    private TextField senderTextFieldDec;
     // endregion
 
     // todo
@@ -125,8 +127,8 @@ public class MainAppController implements Initializable {
             e.printStackTrace();
         }
     }
-
     // region Encryption and decryption
+
     public void encrypt(ActionEvent event) {
         try {
             // validate fields and certificate
@@ -140,9 +142,11 @@ public class MainAppController implements Initializable {
             String outputDir = outputPathTextFieldEnc.getText();
             String outputPath = outputDir + File.separator + fileName + OUTPUT_EXTENSION_ENC;
             String algorithmName = algorithmComboBox.getSelectionModel().getSelectedItem();
+            String pathToUserCert = userCertTextFieldEnc.getText();
+
 
             // start encryption
-            Encryption.encryption(inputPath, outputPath, algorithmName);
+            Encryption.encryption(inputPath, outputPath, algorithmName, pathToUserCert);
 
             // populate the list
             reportList.add("Username: " + user.getUsername());
@@ -177,9 +181,9 @@ public class MainAppController implements Initializable {
             // generate parameters for decryption
             String inputPath = filePathTextFieldDec.getText();
             String outputDir = outputPathTextFieldDec.getText();
-            String outputFileName = "Test"; // todo - change this - make string parser to find class name
-            String outputPath = outputDir + File.separator + outputFileName;
-            Encryption.decryption(inputPath, outputPath);
+            String outputPath = outputDir;
+            String sender = senderTextFieldDec.getText();
+            Encryption.decryption(inputPath, outputPath, sender);
         } catch (NotDirectoryException | FieldMissingException | FileNotFoundException e) {
             notifyIncorrectData(e);
         } catch (SignatureException | CertificateOnCRLException | InvalidKeyException | NoSuchAlgorithmException | CertificateException e) {
@@ -198,8 +202,8 @@ public class MainAppController implements Initializable {
         reportListViewDec.setItems(list);
     }
     // endregion
-
     // region Browse buttons
+
     public void findFileEnc(ActionEvent event) {
         findFile("Find file to encrypt", DEFAULT_DIR, "Java files", INPUT_EXTENSION_FILTER, filePathTextFieldEnc);
     }
@@ -320,6 +324,7 @@ public class MainAppController implements Initializable {
         // if a field is empty
         if (filePathTextFieldDec.getText().length() == 0
                 || outputPathTextFieldDec.getText().length() == 0
+                || senderTextFieldDec.getText().length() == 0
         ) {
             throw new FieldMissingException();
         }
