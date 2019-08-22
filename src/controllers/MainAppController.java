@@ -74,6 +74,8 @@ public class MainAppController implements Initializable {
     @FXML
     private ComboBox<String> algorithmComboBox;
     @FXML
+    public ComboBox hashAlgorithmComboBoxEnc;
+    @FXML
     private TextField outputPathTextFieldEnc;
     @FXML
     private Button outputDirButtonEnc;
@@ -119,6 +121,10 @@ public class MainAppController implements Initializable {
         algorithmComboBox.getItems().add("CAMELLIA");
         algorithmComboBox.getItems().add("DES3");
         algorithmComboBox.getSelectionModel().selectFirst();
+        hashAlgorithmComboBoxEnc.getItems().add("MD5");
+        hashAlgorithmComboBoxEnc.getItems().add("SHA256");
+        hashAlgorithmComboBoxEnc.getItems().add("SHA512");
+        hashAlgorithmComboBoxEnc.getSelectionModel().selectFirst();
         try {
             rootCert = CertUtil.loadCert(PATH_TO_ROOT_CERT);
         } catch (CertificateException e) {

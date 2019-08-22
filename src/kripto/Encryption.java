@@ -27,6 +27,8 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 
 public class Encryption {
+    // TODO: 8/22/19 use hash selector in encrypt and decrypt
+
 
     // todo
     //  - create class for RSA

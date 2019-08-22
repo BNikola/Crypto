@@ -10,6 +10,25 @@ import java.security.*;
 
 public class Hashing {
 
+    // TODO: 8/22/19 change this to proper class like UniversalAlgorithm
+
+    public static String uniGenerate(String hashAlgName, String input) throws GeneralSecurityException {
+        switch (hashAlgName) {
+            case "MD5":
+                return generateHashMD5(input);
+            case "SHA256":
+                return generateHashSHA256(input);
+            default:
+                return generateHashSHA512(input);
+        }
+    }
+
+    public static boolean uniValidate(String hashAlgName, String input, String hash) {
+        return false;
+    }
+
+
+
     private static void init() {
         Security.addProvider(new BouncyCastleProvider());
     }
