@@ -3,10 +3,7 @@ package kripto;
 import controllers.MainAppController;
 import extraUtil.AlertBox;
 import extraUtil.User;
-import extraUtil.exceptions.CertPathException;
-import extraUtil.exceptions.PasswordException;
-import extraUtil.exceptions.WrongCredentials;
-import extraUtil.exceptions.WrongSenderException;
+import extraUtil.exceptions.*;
 import kripto.algs.CertUtil;
 import kripto.algs.MyAES;
 import kripto.algs.MyCamellia;
@@ -19,6 +16,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
@@ -210,6 +208,13 @@ public class Encryption {
 //            String data = new String(Files.readAllBytes(Paths.get(pathToInput)));       // read without bais
             Hashing hasher = new Hashing(hashingAlgorithm);
             byte[] hash = hasher.generateHash(data).getBytes(StandardCharsets.UTF_8);
+            // hash algorithm
+            out.write(
+                    CertUtil.encryptAsymmetric(
+                            hashingAlgorithm.getBytes(StandardCharsets.UTF_8),
+                            userCert));
+            // separator
+            out.write(separator);
             // hash of the file
             out.write(
                     CertUtil.encryptAsymmetric(
@@ -269,6 +274,11 @@ public class Encryption {
             System.out.println(algorithmKey.length + "||||");
             // read separator
             in.read(reader);
+            // read hashing algorithm name
+            in.read(reader);
+            String hashingAlgorithmName = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
+            // read separator
+            in.read(reader);
             System.out.println(new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey())).length() + "|||");
             // read hash of file
             in.read(reader);
@@ -277,7 +287,7 @@ public class Encryption {
             // read separator
             in.read(reader);
             System.out.println(new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey())));
-            // read separator
+            // read filename
             in.read(reader);
             String fileName = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
             System.out.println(fileName + "|");
@@ -288,6 +298,11 @@ public class Encryption {
             System.out.println(algorithm.getKey().length);
             algorithm.decrypt(in, out);
             out.close();
+            Hashing hasher = new Hashing(hashingAlgorithmName);
+            boolean hashValidator = hasher.validateHash(new String(Files.readAllBytes(Paths.get(pathToOutput + File.separator + fileName))), hash);
+            if (!hashValidator) {
+                throw new HashMismatchException();
+            }
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -297,6 +312,8 @@ public class Encryption {
             e.printStackTrace();
         } catch (WrongSenderException e) {
             AlertBox.display("Wrong Sender", "The file was not encrypted by this person.");
+        } catch (HashMismatchException e) {
+            AlertBox.display("Hash mismatch", "The hash does not match the provided hash.");
         }
     }
 

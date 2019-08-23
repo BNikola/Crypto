@@ -84,17 +84,17 @@ public class CertUtil {
         }
     }
 
-    public static byte[] generateSignature(PrivateKey privateKey, byte[] input) throws GeneralSecurityException {
+    public static byte[] generateSignature(PrivateKey privateKey, byte[] input, String hashingAlgorithmName) throws GeneralSecurityException {
         Security.addProvider(new BouncyCastleProvider());
-        Signature signature = Signature.getInstance("SHA256withRSA", "BC");
+        Signature signature = Signature.getInstance(hashingAlgorithmName + "withRSA", "BC");
         signature.initSign(privateKey);
         signature.update(input);
         return signature.sign();
     }
 
-    public static boolean verifySignature(X509Certificate certificate, byte[] input, byte[] encSignature) throws GeneralSecurityException {
+    public static boolean verifySignature(X509Certificate certificate, byte[] input, byte[] encSignature, String hashingAlgorithmName) throws GeneralSecurityException {
         Security.addProvider(new BouncyCastleProvider());
-        Signature signature = Signature.getInstance("SHA256withRSA", "BC");
+        Signature signature = Signature.getInstance(hashingAlgorithmName + "withRSA", "BC");
         signature.initVerify(certificate);
         signature.update(input);
         return signature.verify(encSignature);
