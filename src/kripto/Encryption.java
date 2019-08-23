@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
+import java.security.cert.CRLException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
@@ -174,9 +175,10 @@ public class Encryption {
     }
 
     // when encrypting, generate key and store it into file
-    public static void encryption(String pathToInput, String pathToOutput, String symmetricAlgorithm, String pathToUserCert, String hashingAlgorithm) throws CertificateException, FileNotFoundException {
+    public static void encryption(String pathToInput, String pathToOutput, String symmetricAlgorithm, String pathToUserCert, String hashingAlgorithm) throws CertificateException, IOException, CRLException, NoSuchAlgorithmException, CertificateOnCRLException, SignatureException, NoSuchProviderException, InvalidKeyException {
         UniversalAlgorithm algorithm = new UniversalAlgorithm(symmetricAlgorithm);
         X509Certificate userCert = CertUtil.loadCert(pathToUserCert);
+        CertUtil.checkValidityOfCertificate(userCert, MainAppController.rootCert, MainAppController.getPathToCrl());
         try (InputStream in = new FileInputStream(pathToInput); OutputStream out = new FileOutputStream(pathToOutput)) {
             // writing data for decryption and encrypting with certificate
             // separator
@@ -244,7 +246,7 @@ public class Encryption {
     }
 
     // when decrypting, remember to skip separator
-    public static void decryption(String pathToInput, String pathToOutput, String sender) {
+    public static void decryption(String pathToInput, String pathToOutput, String sender) throws CertificateOnCRLException, WrongSenderException, HashMismatchException, CertificateException, SignatureException {
         try (InputStream in = new FileInputStream(pathToInput)) {
             // reader for header
 
@@ -257,7 +259,8 @@ public class Encryption {
                 throw new WrongSenderException();
             }
             // check validity of certificate CertUtil.checkValidityOfCertificate(new User());
-//            X509Certificate senderCert = CertUtil.loadCertFromUsername(userName); todo - test this later
+            X509Certificate senderCert = CertUtil.loadCertFromUsername(userName);// todo - test this later
+            CertUtil.checkValidityOfCertificate(senderCert, MainAppController.rootCert, MainAppController.getPathToCrl());
             // read separator
             in.read(reader);
             System.out.println(new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey())));
@@ -308,12 +311,16 @@ public class Encryption {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (CRLException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
         } catch (GeneralSecurityException e) {
             e.printStackTrace();
-        } catch (WrongSenderException e) {
-            AlertBox.display("Wrong Sender", "The file was not encrypted by this person.");
-        } catch (HashMismatchException e) {
-            AlertBox.display("Hash mismatch", "The hash does not match the provided hash.");
         }
     }
 
@@ -341,11 +348,11 @@ public class Encryption {
             MainAppController.user = new User("Korisnik2", "/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt", "sigurnost2");
 //            Encryption.encryption("/home/korisnik/Faks/Projektni/src/extraUtil/Test.java", "sifra.txt", "AES", "/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt", "MD5");
             Encryption.decryption("sifra.txt", "dekriptovaneDatoteke", "Korisnik2");
-        } catch (WrongCredentials wrongCredentials) {
-            wrongCredentials.printStackTrace();
-        } catch (PasswordException e) {
+        } catch (WrongSenderException | PasswordException | WrongCredentials | CertificateOnCRLException | HashMismatchException | CertPathException e) {
             e.printStackTrace();
-        } catch (CertPathException e) {
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (SignatureException e) {
             e.printStackTrace();
         }
 //        catch (CertificateException e) {

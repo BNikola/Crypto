@@ -73,6 +73,7 @@ public class CertUtil {
         return key;
     }
 
+    // TODO: 8/23/19 add check for expire date
     public static void checkValidityOfCertificate(X509Certificate certificate, X509Certificate rootCert, String pathToCRL)
             throws NoSuchProviderException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeyException, SignatureException, CRLException, IOException, CertificateOnCRLException {
