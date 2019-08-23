@@ -74,7 +74,7 @@ public class MainAppController implements Initializable {
     @FXML
     private ComboBox<String> algorithmComboBox;
     @FXML
-    public ComboBox hashAlgorithmComboBoxEnc;
+    public ComboBox<String> hashAlgorithmComboBoxEnc;
     @FXML
     private TextField outputPathTextFieldEnc;
     @FXML
@@ -149,10 +149,11 @@ public class MainAppController implements Initializable {
             String outputPath = outputDir + File.separator + fileName + OUTPUT_EXTENSION_ENC;
             String algorithmName = algorithmComboBox.getSelectionModel().getSelectedItem();
             String pathToUserCert = userCertTextFieldEnc.getText();
+            String hashingAlgorithm = hashAlgorithmComboBoxEnc.getSelectionModel().getSelectedItem();
 
 
             // start encryption
-            Encryption.encryption(inputPath, outputPath, algorithmName, pathToUserCert);
+            Encryption.encryption(inputPath, outputPath, algorithmName, pathToUserCert, hashingAlgorithm);
 
             // populate the list
             reportList.add("Username: " + user.getUsername());

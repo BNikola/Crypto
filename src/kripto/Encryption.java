@@ -176,7 +176,7 @@ public class Encryption {
     }
 
     // when encrypting, generate key and store it into file
-    public static void encryption(String pathToInput, String pathToOutput, String symmetricAlgorithm, String pathToUserCert) throws CertificateException, FileNotFoundException {
+    public static void encryption(String pathToInput, String pathToOutput, String symmetricAlgorithm, String pathToUserCert, String hashingAlgorithm) throws CertificateException, FileNotFoundException {
         UniversalAlgorithm algorithm = new UniversalAlgorithm(symmetricAlgorithm);
         X509Certificate userCert = CertUtil.loadCert(pathToUserCert);
         try (InputStream in = new FileInputStream(pathToInput); OutputStream out = new FileOutputStream(pathToOutput)) {
@@ -208,7 +208,8 @@ public class Encryption {
             String data = new String(bais.readAllBytes());
             bais.reset();       // reset hash so the symmetric encryption can be done
 //            String data = new String(Files.readAllBytes(Paths.get(pathToInput)));       // read without bais
-            byte[] hash = Hashing.generateHashSHA256(data).getBytes(StandardCharsets.UTF_8);
+            Hashing hasher = new Hashing(hashingAlgorithm);
+            byte[] hash = hasher.generateHash(data).getBytes(StandardCharsets.UTF_8);
             // hash of the file
             out.write(
                     CertUtil.encryptAsymmetric(
@@ -321,7 +322,7 @@ public class Encryption {
 //        }
         try {
             MainAppController.user = new User("Korisnik2", "/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt", "sigurnost2");
-//            Encryption.encryption("/home/korisnik/Faks/Projektni/src/extraUtil/Test.java", "sifra.txt", "AES", "/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt");
+//            Encryption.encryption("/home/korisnik/Faks/Projektni/src/extraUtil/Test.java", "sifra.txt", "AES", "/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt", "MD5");
             Encryption.decryption("sifra.txt", "dekriptovaneDatoteke", "Korisnik2");
         } catch (WrongCredentials wrongCredentials) {
             wrongCredentials.printStackTrace();

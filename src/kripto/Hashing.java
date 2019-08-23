@@ -4,27 +4,57 @@ import org.bouncycastle.jcajce.provider.digest.BCMessageDigest;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Base64;
 
-import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.Security;
 
 public class Hashing {
 
-    // TODO: 8/22/19 change this to proper class like UniversalAlgorithm
+    private String hashAlgName;
+    private String data;
 
-    public static String uniGenerate(String hashAlgName, String input) throws GeneralSecurityException {
-        switch (hashAlgName) {
-            case "MD5":
-                return generateHashMD5(input);
-            case "SHA256":
-                return generateHashSHA256(input);
-            default:
-                return generateHashSHA512(input);
-        }
+    public Hashing(String hashAlgName) {
+        this.hashAlgName = hashAlgName;
     }
 
-    public static boolean uniValidate(String hashAlgName, String input, String hash) {
-        return false;
+    // region Getters and Setters
+    public String getHashAlgName() {
+        return hashAlgName;
+    }
+
+    public void setHashAlgName(String hashAlgName) {
+        this.hashAlgName = hashAlgName;
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    public void setData(String data) {
+        this.data = data;
+    }
+    // endregion
+
+    public String generateHash(String input) throws NoSuchProviderException, NoSuchAlgorithmException {
+        init();
+        BCMessageDigest md = (BCMessageDigest) BCMessageDigest.getInstance(hashAlgName, "BC");
+        final byte[] hashBytes = md.digest(input.getBytes(StandardCharsets.UTF_8));
+        return new String(Base64.encode(hashBytes));
+    }
+
+    public boolean validateHash(String input, String hash) throws NoSuchProviderException, NoSuchAlgorithmException {
+        init();
+        BCMessageDigest md = (BCMessageDigest) BCMessageDigest.getInstance(hashAlgName, "BC");
+        final byte[] hashBytes = md.digest(input.getBytes(StandardCharsets.UTF_8));
+        String hashedInput = new String(Base64.encode(hashBytes));
+
+        if (hashedInput.equals(hash)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 
