@@ -1,5 +1,6 @@
 package kripto;
 
+import com.sun.javafx.image.impl.General;
 import controllers.MainAppController;
 import extraUtil.AlertBox;
 import extraUtil.User;
@@ -13,6 +14,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -80,8 +82,6 @@ public class Encryption {
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            } catch (NoSuchProviderException e) {
                 e.printStackTrace();
             } catch (InvalidKeySpecException e) {
                 e.printStackTrace();
@@ -246,7 +246,7 @@ public class Encryption {
     }
 
     // when decrypting, remember to skip separator
-    public static void decryption(String pathToInput, String pathToOutput, String sender) throws CertificateOnCRLException, WrongSenderException, HashMismatchException, CertificateException, SignatureException {
+    public static void decryption(String pathToInput, String pathToOutput, String sender) throws CertificateOnCRLException, WrongSenderException, HashMismatchException, CertificateException, SignatureException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException {
         try (InputStream in = new FileInputStream(pathToInput)) {
             // reader for header
 
@@ -294,6 +294,7 @@ public class Encryption {
             in.read(reader);
             String fileName = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
             System.out.println(fileName + "|");
+            MainAppController.decryptedFileName = fileName;
             OutputStream out = new FileOutputStream(pathToOutput + File.separator + fileName);
             in.read(reader);
             // create algorithm and call decrypt
@@ -318,8 +319,6 @@ public class Encryption {
         } catch (CRLException e) {
             e.printStackTrace();
         } catch (NoSuchProviderException e) {
-            e.printStackTrace();
-        } catch (GeneralSecurityException e) {
             e.printStackTrace();
         }
     }
@@ -353,6 +352,8 @@ public class Encryption {
         } catch (CertificateException e) {
             e.printStackTrace();
         } catch (SignatureException e) {
+            e.printStackTrace();
+        } catch (GeneralSecurityException e) {
             e.printStackTrace();
         }
 //        catch (CertificateException e) {

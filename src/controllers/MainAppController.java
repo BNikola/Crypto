@@ -2,6 +2,7 @@ package controllers;
 
 import extraUtil.AlertBox;
 import extraUtil.ConfirmBox;
+import extraUtil.JavaCodeUtil;
 import extraUtil.User;
 import extraUtil.exceptions.*;
 import javafx.collections.FXCollections;
@@ -22,6 +23,7 @@ import javafx.stage.Stage;
 import kripto.Encryption;
 import kripto.algs.CertUtil;
 
+import javax.crypto.BadPaddingException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -57,6 +59,7 @@ public class MainAppController implements Initializable {
     public static String getPathToCrl() {
         return PATH_TO_CRL;
     }
+    public static String decryptedFileName = "";
 
     // region FXML members
     @FXML
@@ -202,7 +205,21 @@ public class MainAppController implements Initializable {
             Encryption.decryption(inputPath, outputDir, sender);
             reportListDec.add("Sender: " + sender);
             reportListDec.add("Output location: " + outputDir);
+            reportListDec.add("Decrypted file: " + decryptedFileName);
             reportListDec.add("Status of decryption: OK");
+
+            boolean answer = ConfirmBox.display("Compile and run", "Would you like to run this file?");
+            if (answer) {
+                File file = new File(outputDir + File.separator + decryptedFileName);
+                if (!file.exists()) {
+                    AlertBox.display("Error", "File does not exist!");
+                } else {
+                    File[] filetoCompile = {file};
+                    JavaCodeUtil.compile(filetoCompile);
+                    File fileToExecute = new File(file.getAbsolutePath().replace(".java", ""));
+                    JavaCodeUtil.execute(fileToExecute);
+                }
+            }
 
         } catch (NotDirectoryException | FieldMissingException | FileNotFoundException e) {
             reportListDec.add("Status of decryption: FAIL");
@@ -226,6 +243,10 @@ public class MainAppController implements Initializable {
             AlertBox.display("Certificate error", "Sender certificate is not valid");
         } catch (SignatureException e) {
             reportListDec.add("Sender certificate is not signed by trusted CA");
+        } catch (Exception e) {
+            if (e instanceof BadPaddingException) {
+                AlertBox.display("Wrong receiver", "This file was not meant for you");
+            }
         }
         reportListDec.add("Date: " + new Date());
         reportListDec.add("==================================================================");

@@ -4,7 +4,10 @@ import extraUtil.exceptions.CertificateOnCRLException;
 import kripto.Hashing;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -111,7 +114,7 @@ public class CertUtil {
         return cipherText;
     }
 
-    public static byte[] decryptAsymmetric(byte[] input, PrivateKey privateKey) throws GeneralSecurityException {
+    public static byte[] decryptAsymmetric(byte[] input, PrivateKey privateKey) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         byte[] decryptedText = null;
 
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
