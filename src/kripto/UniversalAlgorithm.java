@@ -1,5 +1,6 @@
 package kripto;
 
+import controllers.Cryptography;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.KeyGenerationParameters;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -18,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.util.logging.Level;
 
 public class UniversalAlgorithm {
 
@@ -39,7 +41,7 @@ public class UniversalAlgorithm {
 
     // region Constructors
     public UniversalAlgorithm(String algorithmName) {
-        InitProvider();
+        init();
         this.algorithmName = algorithmName;
         switch (algorithmName) {
             case "AES":
@@ -50,7 +52,7 @@ public class UniversalAlgorithm {
                     keyGenerator.init(256);
                     key = keyGenerator.generateKey().getEncoded();
                 } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-                    e.printStackTrace();
+                    Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
                 }
                 break;
             case "CAMELLIA": {
@@ -118,7 +120,7 @@ public class UniversalAlgorithm {
             out.write(outBuffer, 0, noBytesProcessed);
             out.flush();
         } catch (IOException | InvalidCipherTextException e) {
-            e.printStackTrace();
+            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
         }
     }
 
@@ -138,7 +140,7 @@ public class UniversalAlgorithm {
             out.write(outBuffer, 0, noBytesProcessed);
             out.flush();
         } catch (IOException | InvalidCipherTextException e) {
-            e.printStackTrace();
+            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
         }
     }
     // endregion
@@ -167,7 +169,7 @@ public class UniversalAlgorithm {
         }
     }
 
-    private void InitProvider() {
+    private void init() {
         Security.addProvider(new BouncyCastleProvider());
     }
     // endregion
