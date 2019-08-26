@@ -23,9 +23,6 @@ public class MD5 {
 
     public static boolean validateHash(String input, String hash, byte[] salt) throws GeneralSecurityException {
         String tmp = MD5.generateHash(input, salt);
-        // todo - delete everything that is not useful
-//        System.out.println("Validation");
-//        System.out.println("aaa: " + tmp.equals(hash));
         return tmp.equals(hash);
     }
 
@@ -37,36 +34,5 @@ public class MD5 {
         // get random salt
         sr.nextBytes(salt);
         return salt;
-    }
-
-    public static void main(String[] args) {
-        String password = "";
-        try {
-//            for(int i=1; i<6; i++) {
-//                password = "sigurnost" + i;
-//                String generatePass = "";
-//                byte [] salt = MD5.getSalt();
-//                generatePass = MD5.generateHashSHA256(password, salt);
-//                System.out.println(password + "#" + Base64.getEncoder().encodeToString(salt) + "#" + generatePass);
-//            }
-            BufferedReader br = new BufferedReader(new FileReader("users.txt"));
-            String sadrzaj = br.readLine();
-            String sadrzaj2 = br.readLine();
-            String [] s = sadrzaj.split("#");
-            byte [] b = Base64.getDecoder().decode(s[1]);
-            System.out.println("salt: " + b);
-            System.out.println(s[0]);
-            System.out.println(s[1]);
-            System.out.println(s[2]);
-            System.out.println(MD5.validateHash(s[0], s[2], b));
-            br.close();
-
-
-
-        } catch (GeneralSecurityException | IOException e) {
-            e.printStackTrace();
-        }
-
-
     }
 }

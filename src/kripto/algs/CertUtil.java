@@ -76,12 +76,12 @@ public class CertUtil {
         return key;
     }
 
-    // TODO: 8/23/19 add check for expire date
     public static void checkValidityOfCertificate(X509Certificate certificate, X509Certificate rootCert, String pathToCRL)
             throws NoSuchProviderException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeyException, SignatureException, CRLException, IOException, CertificateOnCRLException {
 
         certificate.verify(rootCert.getPublicKey());
+        certificate.checkValidity();
         X509CRL crl = loadCRL(pathToCRL);
         if (crl.getRevokedCertificate(certificate) != null) {
             throw new CertificateOnCRLException();
@@ -137,9 +137,21 @@ public class CertUtil {
             e.printStackTrace();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        } catch (GeneralSecurityException e) {
+        }catch (IOException e) {
             e.printStackTrace();
-        } catch (IOException e) {
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (GeneralSecurityException e) {
             e.printStackTrace();
         }
     }

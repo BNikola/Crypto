@@ -110,11 +110,6 @@ public class MainAppController implements Initializable {
     private TextField senderTextFieldDec;
     // endregion
 
-    // todo
-    //  - implement methods for encrypt and decrypt
-    //  - figure out what to output for result
-    //  - think about verify that returns boolean (Certificate verify)
-
 
 
     @Override
@@ -144,7 +139,6 @@ public class MainAppController implements Initializable {
         try {
             // validate fields and certificate
             validationOfDataEnc();
-            // todo - maybe remove cert check (you can encrypt but others will not trust you)
             CertUtil.checkValidityOfCertificate(user.getCertificate(), rootCert, PATH_TO_CRL);
 
             // generate parameters for encryption
@@ -244,9 +238,8 @@ public class MainAppController implements Initializable {
         } catch (SignatureException e) {
             reportListDec.add("Sender certificate is not signed by trusted CA");
         } catch (Exception e) {
-            if (e instanceof BadPaddingException) {
-                AlertBox.display("Wrong receiver", "This file was not meant for you");
-            }
+            AlertBox.display("Wrong receiver", "This file was not meant for you");
+            reportListDec.add("Status of decryption: FAIL");
         }
         reportListDec.add("Date: " + new Date());
         reportListDec.add("==================================================================");

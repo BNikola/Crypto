@@ -28,14 +28,10 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 
 public class Encryption {
-    // TODO: 8/22/19 use hash selector in encrypt and decrypt
 
 
     // todo
-    //  - create class for RSA
-    //  - add hash of the document
     //  - add init() to functions
-    //  - add certificate validation when it is being used
 
     private static void init() {
         Security.addProvider(new BouncyCastleProvider());
@@ -249,8 +245,6 @@ public class Encryption {
     public static void decryption(String pathToInput, String pathToOutput, String sender) throws CertificateOnCRLException, WrongSenderException, HashMismatchException, CertificateException, SignatureException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException {
         try (InputStream in = new FileInputStream(pathToInput)) {
             // reader for header
-
-            // todo - get certificate of the user
             byte[] reader = new byte[256];  // 256 is the size of RSA encryption
             // read username
             in.read(reader);
@@ -259,7 +253,7 @@ public class Encryption {
                 throw new WrongSenderException();
             }
             // check validity of certificate CertUtil.checkValidityOfCertificate(new User());
-            X509Certificate senderCert = CertUtil.loadCertFromUsername(userName);// todo - test this later
+            X509Certificate senderCert = CertUtil.loadCertFromUsername(userName);
             CertUtil.checkValidityOfCertificate(senderCert, MainAppController.rootCert, MainAppController.getPathToCrl());
             // read separator
             in.read(reader);
