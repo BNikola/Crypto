@@ -56,7 +56,7 @@ public class User {
                 this.pathToPrivateKey = line[3];
 
                 this.certificate = CertUtil.loadCert(pathToCert);
-                System.out.println(pathToPrivateKey);
+
                 this.privateKey = CertUtil.loadKey(pathToPrivateKey);
             }
         } catch (IOException | GeneralSecurityException e) {

@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.logging.Level;
 
 
 public class LoginController {
@@ -76,7 +77,7 @@ public class LoginController {
             Scene scene = new Scene(root);
             Stage stage = new Stage();
             stage.setScene(scene);
-            stage.setTitle("Main application");
+            stage.setTitle("controllers.Cryptography application");
             ((Stage) loginBorderPane.getScene().getWindow()).close();
             File f = new File("src/views/css/mainApp.css");
             scene.getStylesheets().add("file:///" + f.getAbsolutePath().replace("\\", "/"));
@@ -92,7 +93,7 @@ public class LoginController {
             });
         } catch (Exception e) {
             System.out.println("Exception in switching to main application");
-            e.printStackTrace();
+            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
         }
     }
 

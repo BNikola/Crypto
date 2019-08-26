@@ -23,6 +23,9 @@ import javafx.stage.Stage;
 import kripto.Encryption;
 import kripto.algs.CertUtil;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -37,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
 
 public class MainAppController implements Initializable {
 
@@ -126,10 +130,8 @@ public class MainAppController implements Initializable {
         hashAlgorithmComboBoxEnc.getSelectionModel().selectFirst();
         try {
             rootCert = CertUtil.loadCert(PATH_TO_ROOT_CERT);
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        } catch (CertificateException | FileNotFoundException e) {
+            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
         }
     }
     // region Encryption and decryption
@@ -138,7 +140,27 @@ public class MainAppController implements Initializable {
         try {
             // validate fields and certificate
             validationOfDataEnc();
-            CertUtil.checkValidityOfCertificate(user.getCertificate(), rootCert, PATH_TO_CRL);
+            try {
+                CertUtil.checkValidityOfCertificate(user.getCertificate(), rootCert, PATH_TO_CRL);
+            } catch (InvalidKeyException | SignatureException e) {
+                reportListEnc.add("Warning: Your certificate is not valid!");
+                reportListEnc.add("Status of encryption: " + "FAIL");
+                return;
+            } catch (CertificateOnCRLException e) {
+                reportListEnc.add("Warning: Your certificate is not valid!");
+                reportListEnc.add("Certificate is on CRL");
+                reportListEnc.add("CRL reasons: " + getReasonsOfRevocation(user.getUsername()));
+                reportListEnc.add("Status of encryption: " + "FAIL");
+                return;
+            } catch (CertificateNotYetValidException e) {
+                reportListEnc.add("Warning: Your certificate is not yet valid!");
+                reportListEnc.add("Status of encryption: " + "FAIL");
+                return;
+            } catch (CertificateExpiredException e) {
+                reportListEnc.add("Warning: Your certificate is not valid anymore!");
+                reportListEnc.add("Status of encryption: " + "FAIL");
+                return;
+            }
 
             // generate parameters for encryption
             String inputPath = filePathTextFieldEnc.getText();
@@ -162,16 +184,15 @@ public class MainAppController implements Initializable {
         } catch (NotDirectoryException | FieldMissingException | FileNotFoundException e) {
             notifyIncorrectData(e);
         } catch (SignatureException | InvalidKeyException | NoSuchAlgorithmException | CertificateException e) {
-            reportListEnc.add("Status of encryption: " + "FAIL");
             AlertBox.display("Certificate error", "User certificate is not valid");
-        } catch (CRLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            e.printStackTrace();
+            reportListEnc.add("Status of encryption: " + "FAIL");
+        } catch (CRLException | IOException | NoSuchProviderException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e) {
+            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
         } catch (CertificateOnCRLException e) {
+            reportListEnc.add("Warning: User certificate is not valid!");
             reportListEnc.add("Certificate is on CRL");
+            reportListEnc.add("CRL reasons: " + getReasonsOfRevocation(user.getUsername()));
+            reportListEnc.add("Status of encryption: " + "FAIL");
             AlertBox.display("Certificate error", "User certificate is not valid");
         }
 
@@ -186,9 +207,24 @@ public class MainAppController implements Initializable {
             validationOfDataDec();
             try {
                 CertUtil.checkValidityOfCertificate(user.getCertificate(), rootCert, PATH_TO_CRL);
-            } catch (CertificateException | InvalidKeyException | CertificateOnCRLException | SignatureException e) {
-                reportListDec.add("Status of decryption: FAIL");
+            } catch (InvalidKeyException | SignatureException e) {
                 reportListDec.add("Warning: Your certificate is not valid!");
+                reportListDec.add("Status of encryption: " + "FAIL");
+                return;
+            } catch (CertificateOnCRLException e) {
+                reportListDec.add("Warning: Your certificate is not valid!");
+                reportListDec.add("Certificate is on CRL");
+                reportListDec.add("CRL reasons: " + getReasonsOfRevocation(user.getUsername()));
+                reportListDec.add("Status of encryption: " + "FAIL");
+                return;
+            } catch (CertificateNotYetValidException e) {
+                reportListDec.add("Warning: Your certificate is not yet valid!");
+                reportListDec.add("Status of encryption: " + "FAIL");
+                return;
+            } catch (CertificateExpiredException e) {
+                reportListDec.add("Warning: Your certificate is not valid anymore!");
+                reportListDec.add("Status of encryption: " + "FAIL");
+                return;
             }
             // generate parameters for decryption
             String inputPath = filePathTextFieldDec.getText();
@@ -219,13 +255,9 @@ public class MainAppController implements Initializable {
             notifyIncorrectData(e);
         } catch (NoSuchAlgorithmException | CertificateException e) {
             reportListDec.add("Status of decryption: " + "FAIL");
-            AlertBox.display("Certificate error", "Your certificate is not valid");
-        } catch (CRLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            e.printStackTrace();
+            AlertBox.display("Certificate error", "User certificate is not valid");
+        } catch (CRLException | IOException | NoSuchProviderException e) {
+            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
         } catch (HashMismatchException e) {
             reportListDec.add("Hash validation: FAIL");
         } catch (WrongSenderException e) {
@@ -292,7 +324,7 @@ public class MainAppController implements Initializable {
             Scene scene = new Scene(root);
             Stage stage = new Stage();
             stage.setScene(scene);
-            stage.setTitle("Main application");
+            stage.setTitle("controllers.Cryptography application");
             ((Stage) mainBorderPane.getScene().getWindow()).close();
             File f = new File("src/views/css/login.css");
             scene.getStylesheets().add("file:///" + f.getAbsolutePath().replace("\\", "/"));

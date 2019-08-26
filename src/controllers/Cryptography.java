@@ -38,7 +38,7 @@ public class Cryptography extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("views/login.fxml"));
+            Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("views/login.fxml"));
             window = primaryStage;
             window.setTitle("JCrypto Login");
             Scene scene = new Scene(root);
