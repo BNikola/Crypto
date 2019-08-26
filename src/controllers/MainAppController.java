@@ -137,63 +137,70 @@ public class MainAppController implements Initializable {
     // region Encryption and decryption
 
     public void encrypt(ActionEvent event) {
+        boolean userCertValid = true;
+
+        // validate fields and certificate
+        // TODO: 8/26/19 check if this is needed - maybe put it in dec only 
         try {
-            // validate fields and certificate
             validationOfDataEnc();
-            try {
-                CertUtil.checkValidityOfCertificate(user.getCertificate(), rootCert, PATH_TO_CRL);
-            } catch (InvalidKeyException | SignatureException e) {
-                reportListEnc.add("Warning: Your certificate is not valid!");
-                reportListEnc.add("Status of encryption: " + "FAIL");
-                return;
-            } catch (CertificateOnCRLException e) {
-                reportListEnc.add("Warning: Your certificate is not valid!");
-                reportListEnc.add("Certificate is on CRL");
-                reportListEnc.add("CRL reasons: " + getReasonsOfRevocation(user.getUsername()));
-                reportListEnc.add("Status of encryption: " + "FAIL");
-                return;
-            } catch (CertificateNotYetValidException e) {
-                reportListEnc.add("Warning: Your certificate is not yet valid!");
-                reportListEnc.add("Status of encryption: " + "FAIL");
-                return;
-            } catch (CertificateExpiredException e) {
-                reportListEnc.add("Warning: Your certificate is not valid anymore!");
-                reportListEnc.add("Status of encryption: " + "FAIL");
-                return;
-            }
-
-            // generate parameters for encryption
-            String inputPath = filePathTextFieldEnc.getText();
-            String fileName = outputFileNameTextFieldEnc.getText();
-            String outputDir = outputPathTextFieldEnc.getText();
-            String outputPath = outputDir + File.separator + fileName + OUTPUT_EXTENSION_ENC;
-            String algorithmName = algorithmComboBox.getSelectionModel().getSelectedItem();
-            String pathToUserCert = userCertTextFieldEnc.getText();
-            String hashingAlgorithm = hashAlgorithmComboBoxEnc.getSelectionModel().getSelectedItem();
-
-
-            // start encryption
-            Encryption.encryption(inputPath, outputPath, algorithmName, pathToUserCert, hashingAlgorithm);
-
-            // populate the list
-            reportListEnc.add("Username: " + user.getUsername());
-            reportListEnc.add("Symmetric algorithm used: " + algorithmName);
-            reportListEnc.add("Output file: " + fileName + OUTPUT_EXTENSION_ENC);
-            reportListEnc.add("Output location: " + outputDir);
-            reportListEnc.add("Status of encryption: " + "OK");
+            CertUtil.checkValidityOfCertificate(user.getCertificate(), rootCert, PATH_TO_CRL);
         } catch (NotDirectoryException | FieldMissingException | FileNotFoundException e) {
             notifyIncorrectData(e);
-        } catch (SignatureException | InvalidKeyException | NoSuchAlgorithmException | CertificateException e) {
-            AlertBox.display("Certificate error", "User certificate is not valid");
+        }
+        catch (InvalidKeyException | SignatureException e) {
+            reportListEnc.add("Warning: Your certificate is not valid!");
             reportListEnc.add("Status of encryption: " + "FAIL");
-        } catch (CRLException | IOException | NoSuchProviderException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e) {
-            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
+            userCertValid = false;
         } catch (CertificateOnCRLException e) {
-            reportListEnc.add("Warning: User certificate is not valid!");
+            reportListEnc.add("Warning: Your certificate is not valid!");
             reportListEnc.add("Certificate is on CRL");
             reportListEnc.add("CRL reasons: " + getReasonsOfRevocation(user.getUsername()));
             reportListEnc.add("Status of encryption: " + "FAIL");
-            AlertBox.display("Certificate error", "User certificate is not valid");
+            userCertValid = false;
+        } catch (CertificateNotYetValidException e) {
+            reportListEnc.add("Warning: Your certificate is not yet valid!");
+            reportListEnc.add("Status of encryption: " + "FAIL");
+            userCertValid = false;
+        } catch (CertificateExpiredException e) {
+            reportListEnc.add("Warning: Your certificate is not valid anymore!");
+            reportListEnc.add("Status of encryption: " + "FAIL");
+            userCertValid = false;
+        } catch (IOException | CertificateException | NoSuchAlgorithmException | CRLException | NoSuchProviderException e) {
+            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
+        }
+        if (userCertValid) {
+            try {
+                // generate parameters for encryption
+                String inputPath = filePathTextFieldEnc.getText();
+                String fileName = outputFileNameTextFieldEnc.getText();
+                String outputDir = outputPathTextFieldEnc.getText();
+                String outputPath = outputDir + File.separator + fileName + OUTPUT_EXTENSION_ENC;
+                String algorithmName = algorithmComboBox.getSelectionModel().getSelectedItem();
+                String pathToUserCert = userCertTextFieldEnc.getText();
+                String hashingAlgorithm = hashAlgorithmComboBoxEnc.getSelectionModel().getSelectedItem();
+
+
+                // start encryption
+                Encryption.encryption(inputPath, outputPath, algorithmName, pathToUserCert, hashingAlgorithm);
+
+                // populate the list
+                reportListEnc.add("Username: " + user.getUsername());
+                reportListEnc.add("Symmetric algorithm used: " + algorithmName);
+                reportListEnc.add("Output file: " + fileName + OUTPUT_EXTENSION_ENC);
+                reportListEnc.add("Output location: " + outputDir);
+                reportListEnc.add("Status of encryption: " + "OK");
+            } catch (SignatureException | InvalidKeyException | NoSuchAlgorithmException | CertificateException e) {
+                AlertBox.display("Certificate error", "User certificate is not valid");
+                reportListEnc.add("Status of encryption: " + "FAIL");
+            } catch (CRLException | IOException | NoSuchProviderException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e) {
+                Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
+            } catch (CertificateOnCRLException e) {
+                reportListEnc.add("Warning: User certificate is not valid!");
+                reportListEnc.add("Certificate is on CRL");
+                reportListEnc.add("CRL reasons: " + getReasonsOfRevocation(user.getUsername()));    // TODO: 8/26/19 change to get reason from path 
+                reportListEnc.add("Status of encryption: " + "FAIL");
+                AlertBox.display("Certificate error", "User certificate is not valid");
+            }
         }
 
         reportListEnc.add("Date: " + new Date());
@@ -286,7 +293,7 @@ public class MainAppController implements Initializable {
             X509CRLEntry revokedCertificate = crl.getRevokedCertificate(userCert);
             reason = revokedCertificate.getRevocationReason().toString();
         } catch (CertificateException | CRLException | IOException e) {
-            e.printStackTrace();
+            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
         }
         return reason;
     }
