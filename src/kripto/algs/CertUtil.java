@@ -79,7 +79,7 @@ public class CertUtil {
     public static void checkValidityOfCertificate(X509Certificate certificate, X509Certificate rootCert, String pathToCRL)
             throws NoSuchProviderException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeyException, SignatureException, CRLException, IOException, CertificateOnCRLException {
-
+// TODO: 8/26/19 add check for use
         certificate.verify(rootCert.getPublicKey());
         certificate.checkValidity();
         X509CRL crl = loadCRL(pathToCRL);

@@ -23,7 +23,6 @@ import javafx.stage.Stage;
 import kripto.Encryption;
 import kripto.algs.CertUtil;
 
-import javax.crypto.BadPaddingException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;

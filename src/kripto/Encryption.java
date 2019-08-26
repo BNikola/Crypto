@@ -1,21 +1,14 @@
 package kripto;
 
-import com.sun.javafx.image.impl.General;
 import controllers.MainAppController;
-import extraUtil.AlertBox;
 import extraUtil.User;
 import extraUtil.exceptions.*;
 import kripto.algs.CertUtil;
-import kripto.algs.MyAES;
-import kripto.algs.MyCamellia;
-import kripto.algs.MyDES;
-import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.ShortBufferException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -25,7 +18,6 @@ import java.security.*;
 import java.security.cert.CRLException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.security.spec.InvalidKeySpecException;
 
 public class Encryption {
 
@@ -41,7 +33,7 @@ public class Encryption {
     public static void encryption(String pathToInput, String pathToOutput, String symmetricAlgorithm, String pathToUserCert, String hashingAlgorithm) throws CertificateException, IOException, CRLException, NoSuchAlgorithmException, CertificateOnCRLException, SignatureException, NoSuchProviderException, InvalidKeyException {
         UniversalAlgorithm algorithm = new UniversalAlgorithm(symmetricAlgorithm);
         X509Certificate userCert = CertUtil.loadCert(pathToUserCert);
-        CertUtil.checkValidityOfCertificate(userCert, MainAppController.rootCert, MainAppController.getPathToCrl());
+        //CertUtil.checkValidityOfCertificate(userCert, MainAppController.rootCert, MainAppController.getPathToCrl());
         try (InputStream in = new FileInputStream(pathToInput); OutputStream out = new FileOutputStream(pathToOutput)) {
             // writing data for decryption and encrypting with certificate
             // separator
@@ -70,7 +62,6 @@ public class Encryption {
             ByteArrayInputStream bais = new ByteArrayInputStream(in.readAllBytes());
             String data = new String(bais.readAllBytes());
             bais.reset();       // reset hash so the symmetric encryption can be done
-//            String data = new String(Files.readAllBytes(Paths.get(pathToInput)));       // read without bais
             Hashing hasher = new Hashing(hashingAlgorithm);
             byte[] hash = hasher.generateHash(data).getBytes(StandardCharsets.UTF_8);
             // hash algorithm
@@ -206,9 +197,9 @@ public class Encryption {
 //        }
         try {
             MainAppController.user = new User("Korisnik2", "/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt", "sigurnost2");
-//            Encryption.encryption("/home/korisnik/Faks/Projektni/src/extraUtil/Test.java", "sifra.txt", "AES", "/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt", "MD5");
-            Encryption.decryption("sifra.txt", "dekriptovaneDatoteke", "Korisnik2");
-        } catch (WrongSenderException | PasswordException | WrongCredentials | CertificateOnCRLException | HashMismatchException | CertPathException e) {
+            Encryption.encryption("/home/korisnik/Faks/Projektni/src/extraUtil/Test.java", "sifra.txt", "AES", "/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt", "MD5");
+//            Encryption.decryption("sifra.txt", "dekriptovaneDatoteke", "Korisnik2");
+        } catch (PasswordException | WrongCredentials | CertificateOnCRLException | CertPathException e) {
             e.printStackTrace();
         } catch (CertificateException e) {
             e.printStackTrace();
@@ -217,11 +208,11 @@ public class Encryption {
         } catch (GeneralSecurityException e) {
             e.printStackTrace();
         }
-//        catch (CertificateException e) {
-//            e.printStackTrace();
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 
