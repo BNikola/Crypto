@@ -93,7 +93,7 @@ public class CertUtil {
         }
     }
 
-    public static byte[] generateSignature(PrivateKey privateKey, byte[] input, String hashingAlgorithmName) throws GeneralSecurityException {
+    public static byte[] generateSignature(PrivateKey privateKey, byte[] input, String hashingAlgorithmName) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         init();
         Signature signature = Signature.getInstance(hashingAlgorithmName + "withRSA", "BC");
         signature.initSign(privateKey);
@@ -101,7 +101,7 @@ public class CertUtil {
         return signature.sign();
     }
 
-    public static boolean verifySignature(X509Certificate certificate, byte[] input, byte[] encSignature, String hashingAlgorithmName) throws GeneralSecurityException {
+    public static boolean verifySignature(X509Certificate certificate, byte[] input, byte[] encSignature, String hashingAlgorithmName) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         init();
         Signature signature = Signature.getInstance(hashingAlgorithmName + "withRSA", "BC");
         signature.initVerify(certificate);
@@ -109,7 +109,7 @@ public class CertUtil {
         return signature.verify(encSignature);
     }
 
-    public static byte[] encryptAsymmetric(byte[] input, X509Certificate certificate) throws GeneralSecurityException {
+    public static byte[] encryptAsymmetric(byte[] input, X509Certificate certificate) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         byte[] cipherText = null;
 
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
@@ -128,39 +128,6 @@ public class CertUtil {
 
         return decryptedText;
     }
-
-//    public static void main(String[] args) {
-//        try {
-//            String username = Hashing.generateHashSHA512("Korisnik1");
-//            X509Certificate cert = loadCert("/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt");
-//            byte[] nesto = encryptAsymmetric(username.getBytes(StandardCharsets.UTF_8), cert);
-//            System.out.println(nesto.length);
-//            PrivateKey pk = loadKey("/home/korisnik/Faks/Projektni/CRL/private/korisnik2.key");
-//            byte[] dekript = decryptAsymmetric(nesto, pk);
-//            System.out.println(new String(dekript));
-//
-//        } catch (CertificateException e) {
-//            e.printStackTrace();
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }catch (IOException e) {
-//            e.printStackTrace();
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        } catch (InvalidKeyException e) {
-//            e.printStackTrace();
-//        } catch (NoSuchPaddingException e) {
-//            e.printStackTrace();
-//        } catch (BadPaddingException e) {
-//            e.printStackTrace();
-//        } catch (InvalidKeySpecException e) {
-//            e.printStackTrace();
-//        } catch (IllegalBlockSizeException e) {
-//            e.printStackTrace();
-//        } catch (GeneralSecurityException e) {
-//            e.printStackTrace();
-//        }
-//    }
 }
 
 
