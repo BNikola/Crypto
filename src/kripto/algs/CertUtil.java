@@ -1,5 +1,6 @@
 package kripto.algs;
 
+import controllers.Cryptography;
 import extraUtil.exceptions.CertificateOnCRLException;
 import kripto.Hashing;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -14,8 +15,13 @@ import java.security.*;
 import java.security.cert.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.logging.Level;
 
 public class CertUtil {
+
+    private static void init() {
+        Security.addProvider(new BouncyCastleProvider());
+    }
 
     public static X509Certificate loadCert(String pathToCert) throws CertificateException, FileNotFoundException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
@@ -39,10 +45,8 @@ public class CertUtil {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             cert = (X509Certificate) cf.generateCertificate(new FileInputStream(pathToCert));   // read cert in X509 format
             return cert;
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
+        } catch (IOException | CertificateException e) {
+            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
         }
         return cert;
     }
@@ -58,7 +62,7 @@ public class CertUtil {
     // keys must be in DER format
 
     public static PrivateKey loadKey(String pathToPrivateKey) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        Security.addProvider(new BouncyCastleProvider());
+        init();
 
         // key for user cert
         PrivateKey key;
@@ -79,6 +83,7 @@ public class CertUtil {
     public static void checkValidityOfCertificate(X509Certificate certificate, X509Certificate rootCert, String pathToCRL)
             throws NoSuchProviderException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeyException, SignatureException, CRLException, IOException, CertificateOnCRLException {
+        init();
 // TODO: 8/26/19 add check for use
         certificate.verify(rootCert.getPublicKey());
         certificate.checkValidity();
@@ -89,7 +94,7 @@ public class CertUtil {
     }
 
     public static byte[] generateSignature(PrivateKey privateKey, byte[] input, String hashingAlgorithmName) throws GeneralSecurityException {
-        Security.addProvider(new BouncyCastleProvider());
+        init();
         Signature signature = Signature.getInstance(hashingAlgorithmName + "withRSA", "BC");
         signature.initSign(privateKey);
         signature.update(input);
@@ -97,7 +102,7 @@ public class CertUtil {
     }
 
     public static boolean verifySignature(X509Certificate certificate, byte[] input, byte[] encSignature, String hashingAlgorithmName) throws GeneralSecurityException {
-        Security.addProvider(new BouncyCastleProvider());
+        init();
         Signature signature = Signature.getInstance(hashingAlgorithmName + "withRSA", "BC");
         signature.initVerify(certificate);
         signature.update(input);
@@ -124,37 +129,38 @@ public class CertUtil {
         return decryptedText;
     }
 
-    public static void main(String[] args) {
-        try {
-            String username = Hashing.generateHashSHA512("Korisnik1");
-            X509Certificate cert = loadCert("/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt");
-            byte[] nesto = encryptAsymmetric(username.getBytes(StandardCharsets.UTF_8), cert);
-            System.out.println(nesto.length);
-            PrivateKey pk = loadKey("/home/korisnik/Faks/Projektni/CRL/private/korisnik2.key");
-            byte[] dekript = decryptAsymmetric(nesto, pk);
-            System.out.println(new String(dekript));
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeySpecException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (GeneralSecurityException e) {
-            e.printStackTrace();
-        }
-    }
+//    public static void main(String[] args) {
+//        try {
+//            String username = Hashing.generateHashSHA512("Korisnik1");
+//            X509Certificate cert = loadCert("/home/korisnik/Faks/Projektni/CRL/certs/korisnik2.crt");
+//            byte[] nesto = encryptAsymmetric(username.getBytes(StandardCharsets.UTF_8), cert);
+//            System.out.println(nesto.length);
+//            PrivateKey pk = loadKey("/home/korisnik/Faks/Projektni/CRL/private/korisnik2.key");
+//            byte[] dekript = decryptAsymmetric(nesto, pk);
+//            System.out.println(new String(dekript));
+//
+//        } catch (CertificateException e) {
+//            e.printStackTrace();
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }catch (IOException e) {
+//            e.printStackTrace();
+//        } catch (NoSuchAlgorithmException e) {
+//            e.printStackTrace();
+//        } catch (InvalidKeyException e) {
+//            e.printStackTrace();
+//        } catch (NoSuchPaddingException e) {
+//            e.printStackTrace();
+//        } catch (BadPaddingException e) {
+//            e.printStackTrace();
+//        } catch (InvalidKeySpecException e) {
+//            e.printStackTrace();
+//        } catch (IllegalBlockSizeException e) {
+//            e.printStackTrace();
+//        } catch (GeneralSecurityException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }
 
 
