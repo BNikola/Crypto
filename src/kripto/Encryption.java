@@ -4,6 +4,7 @@ import controllers.Cryptography;
 import controllers.MainAppController;
 import extraUtil.exceptions.CertificateOnCRLException;
 import extraUtil.exceptions.HashMismatchException;
+import extraUtil.exceptions.SignatureNotValidException;
 import extraUtil.exceptions.WrongSenderException;
 import kripto.algs.CertUtil;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -20,6 +21,7 @@ import java.security.*;
 import java.security.cert.CRLException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.logging.Level;
 
 public class Encryption {
@@ -47,6 +49,13 @@ public class Encryption {
                     CertUtil.encryptAsymmetric(
                             MainAppController.user.getUsername().getBytes(StandardCharsets.UTF_8),
                             userCert));
+            out.write(separator);
+            // signature of userName
+            out.write(
+                    CertUtil.generateSignature(
+                            MainAppController.user.getPrivateKey(),
+                            MainAppController.user.getUsername().getBytes(StandardCharsets.UTF_8),
+                            hashingAlgorithm));
             out.write(separator);
             // symmetric algorithm name
             out.write(
@@ -98,7 +107,7 @@ public class Encryption {
     }
 
     // when decrypting, remember to skip separator
-    public static void decryption(String pathToInput, String pathToOutput, String sender) throws CertificateOnCRLException, WrongSenderException, HashMismatchException, CertificateException, SignatureException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException {
+    public static void decryption(String pathToInput, String pathToOutput, String sender) throws CertificateOnCRLException, WrongSenderException, HashMismatchException, CertificateException, SignatureException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException, SignatureNotValidException {
         init();
         try (InputStream in = new FileInputStream(pathToInput)) {
             // reader for header
@@ -113,6 +122,11 @@ public class Encryption {
             X509Certificate senderCert = CertUtil.loadCertFromUsername(userName);
             CertUtil.checkValidityOfCertificate(senderCert, MainAppController.rootCert, MainAppController.getPathToCrl());
             // read separator
+            in.read(reader);
+            // read signature
+            in.read(reader);
+            byte [] signature = Arrays.copyOf(reader, reader.length);
+            //read separator
             in.read(reader);
 
             // read symmetric algorithm name
@@ -131,6 +145,7 @@ public class Encryption {
             // read hashing algorithm name
             in.read(reader);
             String hashingAlgorithmName = new String(CertUtil.decryptAsymmetric(reader, MainAppController.user.getPrivateKey()));
+
             // read separator
             in.read(reader);
 
@@ -157,6 +172,12 @@ public class Encryption {
             boolean hashValidator = hasher.validateHash(new String(Files.readAllBytes(Paths.get(pathToOutput + File.separator + fileName))), hash);
             if (!hashValidator) {
                 throw new HashMismatchException();
+            }
+
+            // test signature
+            boolean signatureValid = CertUtil.verifySignature(senderCert, userName.getBytes(StandardCharsets.UTF_8), signature, hashingAlgorithmName);
+            if (!signatureValid) {
+                throw new SignatureNotValidException();
             }
 
         } catch (IOException | NoSuchAlgorithmException | InvalidKeyException | CRLException | NoSuchProviderException e) {

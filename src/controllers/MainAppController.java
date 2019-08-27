@@ -140,7 +140,6 @@ public class MainAppController implements Initializable {
         boolean userCertValid = true;
 
         // validate fields and certificate
-        // TODO: 8/26/19 check if this is needed - maybe put it in dec only 
         try {
             validationOfDataEnc();
             CertUtil.checkValidityOfCertificate(user.getCertificate(), rootCert, PATH_TO_CRL);
@@ -169,17 +168,17 @@ public class MainAppController implements Initializable {
             Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
         }
         if (userCertValid) {
+
+            // generate parameters for encryption
+            String inputPath = filePathTextFieldEnc.getText();
+            String fileName = outputFileNameTextFieldEnc.getText();
+            String outputDir = outputPathTextFieldEnc.getText();
+            String outputPath = outputDir + File.separator + fileName + OUTPUT_EXTENSION_ENC;
+            String algorithmName = algorithmComboBox.getSelectionModel().getSelectedItem();
+            String pathToUserCert = userCertTextFieldEnc.getText();
+            String hashingAlgorithm = hashAlgorithmComboBoxEnc.getSelectionModel().getSelectedItem();
+
             try {
-                // generate parameters for encryption
-                String inputPath = filePathTextFieldEnc.getText();
-                String fileName = outputFileNameTextFieldEnc.getText();
-                String outputDir = outputPathTextFieldEnc.getText();
-                String outputPath = outputDir + File.separator + fileName + OUTPUT_EXTENSION_ENC;
-                String algorithmName = algorithmComboBox.getSelectionModel().getSelectedItem();
-                String pathToUserCert = userCertTextFieldEnc.getText();
-                String hashingAlgorithm = hashAlgorithmComboBoxEnc.getSelectionModel().getSelectedItem();
-
-
                 // start encryption
                 Encryption.encryption(inputPath, outputPath, algorithmName, pathToUserCert, hashingAlgorithm);
 
@@ -197,7 +196,11 @@ public class MainAppController implements Initializable {
             } catch (CertificateOnCRLException e) {
                 reportListEnc.add("Warning: User certificate is not valid!");
                 reportListEnc.add("Certificate is on CRL");
-                reportListEnc.add("CRL reasons: " + getReasonsOfRevocation(user.getUsername()));    // TODO: 8/26/19 change to get reason from path 
+                try {
+                    reportListEnc.add("CRL reasons: " + getReasonsOfRevocationURL(pathToUserCert));
+                } catch (CertificateException | FileNotFoundException e1) {
+                    Cryptography.LOGGER.log(Level.SEVERE, e1.toString(), e1);
+                }
                 reportListEnc.add("Status of encryption: " + "FAIL");
                 AlertBox.display("Certificate error", "User certificate is not valid");
             }
@@ -210,75 +213,87 @@ public class MainAppController implements Initializable {
     }
 
     public void decrypt(ActionEvent event) {
-        try {
-            validationOfDataDec();
+        boolean userCertValid = true;
             try {
+                validationOfDataDec();
                 CertUtil.checkValidityOfCertificate(user.getCertificate(), rootCert, PATH_TO_CRL);
             } catch (InvalidKeyException | SignatureException e) {
                 reportListDec.add("Warning: Your certificate is not valid!");
                 reportListDec.add("Status of encryption: " + "FAIL");
-                return;
+                userCertValid = false;
             } catch (CertificateOnCRLException e) {
                 reportListDec.add("Warning: Your certificate is not valid!");
                 reportListDec.add("Certificate is on CRL");
                 reportListDec.add("CRL reasons: " + getReasonsOfRevocation(user.getUsername()));
                 reportListDec.add("Status of encryption: " + "FAIL");
-                return;
+                userCertValid = false;
             } catch (CertificateNotYetValidException e) {
                 reportListDec.add("Warning: Your certificate is not yet valid!");
                 reportListDec.add("Status of encryption: " + "FAIL");
-                return;
+                userCertValid = false;
             } catch (CertificateExpiredException e) {
                 reportListDec.add("Warning: Your certificate is not valid anymore!");
                 reportListDec.add("Status of encryption: " + "FAIL");
-                return;
+                userCertValid = false;
+            }  catch (NotDirectoryException | FieldMissingException | FileNotFoundException e) {
+                reportListDec.add("Status of decryption: FAIL");
+                notifyIncorrectData(e);
+            } catch (IOException | CertificateException | NoSuchAlgorithmException | CRLException | NoSuchProviderException e) {
+                Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
             }
+        if (userCertValid) {
             // generate parameters for decryption
             String inputPath = filePathTextFieldDec.getText();
             String outputDir = outputPathTextFieldDec.getText();
             String sender = senderTextFieldDec.getText();
+            try {
 
-            Encryption.decryption(inputPath, outputDir, sender);
-            reportListDec.add("Sender: " + sender);
-            reportListDec.add("Output location: " + outputDir);
-            reportListDec.add("Decrypted file: " + decryptedFileName);
-            reportListDec.add("Status of decryption: OK");
+                Encryption.decryption(inputPath, outputDir, sender);
 
-            boolean answer = ConfirmBox.display("Compile and run", "Would you like to run this file?");
-            if (answer) {
-                File file = new File(outputDir + File.separator + decryptedFileName);
-                if (!file.exists()) {
-                    AlertBox.display("Error", "File does not exist!");
-                } else {
-                    File[] filetoCompile = {file};
-                    JavaCodeUtil.compile(filetoCompile);
-                    File fileToExecute = new File(file.getAbsolutePath().replace(".java", ""));
-                    JavaCodeUtil.execute(fileToExecute);
+                reportListDec.add("Sender: " + sender);
+                reportListDec.add("Output location: " + outputDir);
+                reportListDec.add("Decrypted file: " + decryptedFileName);
+                reportListDec.add("Status of decryption: OK");
+
+                boolean answer = ConfirmBox.display("Compile and run", "Would you like to run this file?");
+                if (answer) {
+                    File file = new File(outputDir + File.separator + decryptedFileName);
+                    if (!file.exists()) {
+                        AlertBox.display("Error", "File does not exist!");
+                    } else {
+                        File[] filetoCompile = {file};
+                        JavaCodeUtil.compile(filetoCompile);
+                        File fileToExecute = new File(file.getAbsolutePath().replace(".java", ""));
+                        JavaCodeUtil.execute(fileToExecute);
+                    }
                 }
-            }
 
-        } catch (NotDirectoryException | FieldMissingException | FileNotFoundException e) {
-            reportListDec.add("Status of decryption: FAIL");
-            notifyIncorrectData(e);
-        } catch (NoSuchAlgorithmException | CertificateException e) {
-            reportListDec.add("Status of decryption: " + "FAIL");
-            AlertBox.display("Certificate error", "User certificate is not valid");
-        } catch (CRLException | IOException | NoSuchProviderException e) {
-            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
-        } catch (HashMismatchException e) {
-            reportListDec.add("Hash validation: FAIL");
-        } catch (WrongSenderException e) {
-            reportListDec.add("Warning: Wrong sender");
-        } catch (CertificateOnCRLException e) {
-            reportListDec.add("Certificate is on CRL");
-            reportListDec.add("CRL reasons: " + getReasonsOfRevocation(senderTextFieldDec.getText()));
-            AlertBox.display("Certificate error", "Sender certificate is not valid");
-        } catch (SignatureException e) {
-            reportListDec.add("Sender certificate is not signed by trusted CA");
-        } catch (Exception e) {
-            AlertBox.display("Wrong receiver", "This file was not meant for you");
-            reportListDec.add("Status of decryption: FAIL");
+            } catch (CertificateException e) {
+                reportListDec.add("Status of decryption: " + "FAIL");
+                AlertBox.display("Certificate error", "User certificate is not valid");
+            } catch (IOException e) {
+                Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
+            } catch (HashMismatchException e) {
+                reportListDec.add("Hash validation: FAIL");
+            } catch (WrongSenderException e) {
+                reportListDec.add("Warning: Wrong sender");
+                reportListDec.add("Status of decryption: " + "FAIL");
+            } catch (CertificateOnCRLException e) {
+                reportListDec.add("Certificate is on CRL");
+                reportListDec.add("CRL reasons: " + getReasonsOfRevocation(senderTextFieldDec.getText()));
+                reportListDec.add("Status of decryption: " + "FAIL");
+                AlertBox.display("Certificate error", "Sender certificate is not valid");
+            } catch (SignatureException e) {
+                reportListDec.add("Sender certificate is not signed by trusted CA");
+            } catch (SignatureNotValidException e) {
+                reportListDec.add("Status of decryption: OK");
+                reportListDec.add("Warning: Signature is not valid!");
+            } catch (Exception e) {
+                AlertBox.display("Wrong receiver", "This file was not meant for you");
+                reportListDec.add("Status of decryption: FAIL");
+            }
         }
+
         reportListDec.add("Date: " + new Date());
         reportListDec.add("==================================================================");
         ObservableList<String> list = FXCollections.observableList(reportListDec);
@@ -287,6 +302,19 @@ public class MainAppController implements Initializable {
 
     private String getReasonsOfRevocation(String user) {
         X509Certificate userCert = CertUtil.loadCertFromUsername(user);
+        String reason = "Unknown";
+        try {
+            X509CRL crl = CertUtil.loadCRL(getPathToCrl());
+            X509CRLEntry revokedCertificate = crl.getRevokedCertificate(userCert);
+            reason = revokedCertificate.getRevocationReason().toString();
+        } catch (CertificateException | CRLException | IOException e) {
+            Cryptography.LOGGER.log(Level.SEVERE, e.toString(), e);
+        }
+        return reason;
+    }
+
+    private String getReasonsOfRevocationURL(String pathToUserCert) throws CertificateException, FileNotFoundException {
+        X509Certificate userCert = CertUtil.loadCert(pathToUserCert);
         String reason = "Unknown";
         try {
             X509CRL crl = CertUtil.loadCRL(getPathToCrl());
@@ -410,7 +438,6 @@ public class MainAppController implements Initializable {
         ) {
             throw new FieldMissingException();
         }
-        // todo - change validate path to file to validate path to cert and throw new certException
         validatePathToFile(filePathTextFieldEnc.getText());
         validatePathToDir(outputPathTextFieldEnc.getText());
         validatePathToFile(userCertTextFieldEnc.getText());
