@@ -127,36 +127,6 @@ public class MyAES {
             e.printStackTrace();
         }
     }
-
-    public static void main(String[] args) {
-        MyAES a = new MyAES();
-        MyAES b;
-
-        try {
-            FileInputStream fis;
-//            FileOutputStream fos = new FileOutputStream("teeeeest.txt");
-//            fos.write(a.key);
-//            fos.write("\n##############################\n".getBytes(StandardCharsets.UTF_8));
-//            fos.flush();
-//            fos.close();
-
-            fis = new FileInputStream("teeeeest.txt");
-            // read key and separator
-            byte[] bytes = new byte[32];
-            fis.read(bytes);
-            b = new MyAES(bytes);
-            fis.close();
-
-
-//            a.encrypt(new FileInputStream("testEnkripcije.txt"), new FileOutputStream("umirem.txt"));
-            b.decrypt(new FileInputStream("umirem.txt"), new FileOutputStream("dekriptovano2.txt"));
-
-
-        } catch (InvalidCipherTextException | IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 }
 
 

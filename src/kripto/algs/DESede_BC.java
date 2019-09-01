@@ -134,16 +134,4 @@ public class DESede_BC extends CertUtil {
             System.out.println(e.getMessage());
         }
     }
-
-    public static void main(String[] args) {
-        DESede_BC a = new DESede_BC();
-        DESede_BC b = new DESede_BC();
-        DESede_BC c = new DESede_BC();
-        try {
-            a.encrypt(new FileInputStream("Biljeske.txt"), 2, new FileOutputStream("sifra.txt"));
-            a.decrypt(new FileInputStream("sifra.txt"), 2, new FileOutputStream("dekriptovano.txt"));
-        } catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException | InvalidCipherTextException | FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
 }
